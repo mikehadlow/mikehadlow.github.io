@@ -190,18 +190,18 @@
         var lines = canvas.append("g").attr("transform", "translate(200, 150)");
         var lines2 = canvas.append("g").attr("transform", "translate(200, 150)");
 
-        var tics = 16;
+        var tics = 32;
 
         var scale = d3.scale.linear().domain([0, tics-1 + (999/1000)]).range([0, 2 * Math.PI]);
 
         var line = d3.svg.arc()
             .innerRadius(100)
-            .outerRadius(120)
+            .outerRadius(110)
             .startAngle( function(d) { return scale(d); } )
             .endAngle(   function(d) { return scale(d); } );
 
         var line2 = d3.svg.arc()
-            .innerRadius(80)
+            .innerRadius(90)
             .outerRadius(100)
             .startAngle( function(d) { return scale(d); } )
             .endAngle(   function(d) { return scale(d); } );
