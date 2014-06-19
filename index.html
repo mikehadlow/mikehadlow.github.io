@@ -195,7 +195,7 @@
             .innerRadius(80)
             .outerRadius(120)
             .startAngle( function(d) { return scale(d); } )
-            .endAngle(   function(d) { return scale(d); } );
+            .endAngle(   function(d) { return scale(d + 0.5); } );
 
         var data = [];
         for(var i=0; i < tics; i++) {
