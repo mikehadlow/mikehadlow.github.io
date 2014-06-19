@@ -222,7 +222,7 @@
             .style("fill", "none");
 
         var rotation = 0;
-        setInterval(function() {
+        canvas.on("click", function {
             rotation = rotation + 10;
 
             lines.transition()
@@ -236,7 +236,7 @@
             if(rotation == 360) {
                 rotation = 0;
             }
-        }, 1000);
+        });
 
     </script>
   
