@@ -223,10 +223,10 @@
 
         var rotation = 0;
         canvas.on("click", function () {
-            rotation = rotation + 10;
+            rotation = rotation + 180;
 
             lines.transition()
-                .duration(500)
+                .duration(2000)
                 .attr("transform", "translate(200, 150) rotate(" + rotation + ")");
 
             lines2.transition()
