@@ -207,10 +207,16 @@
             .style("stroke", "white")
             .style("fill", "none");
 
+        var rotation = 0;
         setInterval(function() {
+            rotation += 10;
             lines.transition()
                 .duration(500)
                 .attr("transform", "translate(200, 150) rotate(10)");
+
+            if(rotation = 360) {
+                rotation = 0;
+            }
         }, 1000);
 
     </script>
