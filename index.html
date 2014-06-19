@@ -202,6 +202,7 @@
                 .endAngle(   function(d) { return scale(d + 0.5); } );
         };
 
+        var line0 = generateLines(115, 120);
         var line = generateLines(90, 110);
         var line2 = generateLines(70, 85);
 
@@ -218,6 +219,7 @@
         };
         
         appendLines(data, lines, line);
+        appendLines(data, lines2, line0);
         appendLines(data, lines2, line2);
 
         var rotation = 0;
