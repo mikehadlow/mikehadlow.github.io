@@ -189,6 +189,7 @@
 
         var lines = canvas.append("g").attr("transform", "translate(200, 150)");
         var lines2 = canvas.append("g").attr("transform", "translate(200, 150)");
+        var lines3 = canvas.append("g").attr("transform", "translate(200, 150)");
 
         var tics = 32;
 
@@ -220,7 +221,7 @@
         
         appendLines(data, lines, line);
         appendLines(data, lines2, line0);
-        appendLines(data, lines2, line2);
+        appendLines(data, lines3, line2);
 
         var rotation = 0;
         var animate = function () {
@@ -231,6 +232,10 @@
                 .attr("transform", "translate(200, 150) rotate(" + rotation + ")");
 
             lines2.transition()
+                .duration(2000)
+                .attr("transform", "translate(200, 150) rotate(-" + rotation + ")");
+
+            lines3.transition()
                 .duration(2000)
                 .attr("transform", "translate(200, 150) rotate(-" + rotation + ")");
 
