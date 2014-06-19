@@ -185,7 +185,7 @@
             .style("stroke", "white")
             .style("fill", "none");
 
-        var lines = canvas.append("g");
+        var lines = canvas.append("g").attr("transform", "translate(200, 150)");
 
         var scale = d3.scale.linear().domain([0, 15]).range([0, 2 * Math.PI]);
 
