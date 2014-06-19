@@ -186,15 +186,24 @@
             .style("fill", "none");
 
         var lines = canvas.append("g");
+
+        var scale = d3.scale.linear().domain([0, 15]).range([0, 2 * Math.PI]);
+
+        var line = d3.svg.arc()
+            .innerRadius(80)
+            .outerRadius(120)
+            .startAngle( function(d) { return scale(d); } )
+            .endAngle(   function(d) { return scale(d); } );
+
+        var data = [];
         for(var i=0; i < 16; i++) {
-            lines.append("line")
-                .attr("x1", 200)
-                .attr("y1", 150)
-                .attr("x2", 300)
-                .attr("y2", 150 + (i * 10))
-                .style("stroke", "white")
-                .style("fill", "none");
+            data.push(i);
         }
+
+        lines.selectAll("path").data(data).enter().append("path")
+            .attr("d", function(d) { return line(d); })
+            .style("stroke", "white")
+            .style("fill", "none");
 
     </script>
   
