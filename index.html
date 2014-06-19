@@ -186,6 +186,7 @@
             .style("fill", "none");
 
         var lines = canvas.append("g").attr("transform", "translate(200, 150)");
+        var lines2 = canvas.append("g").attr("transform", "translate(200, 150)");
 
         var tics = 16;
 
@@ -194,6 +195,12 @@
         var line = d3.svg.arc()
             .innerRadius(80)
             .outerRadius(120)
+            .startAngle( function(d) { return scale(d); } )
+            .endAngle(   function(d) { return scale(d); } );
+
+        var line2 = d3.svg.arc()
+            .innerRadius(40)
+            .outerRadius(80)
             .startAngle( function(d) { return scale(d); } )
             .endAngle(   function(d) { return scale(d); } );
 
@@ -207,12 +214,22 @@
             .style("stroke", "white")
             .style("fill", "none");
 
+        lines2.selectAll("path").data(data).enter().append("path")
+            .attr("d", function(d) { return line(d); })
+            .style("stroke", "white")
+            .style("fill", "none");
+
         var rotation = 0;
         setInterval(function() {
             rotation = rotation + 30;
+
             lines.transition()
                 .duration(500)
                 .attr("transform", "translate(200, 150) rotate(" + rotation + ")");
+
+            lines2.transition()
+                .duration(500)
+                .attr("transform", "translate(200, 150) rotate(-" + rotation + ")");
 
             if(rotation == 360) {
                 rotation = 0;
