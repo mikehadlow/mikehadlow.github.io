@@ -194,18 +194,16 @@
 
         var scale = d3.scale.linear().domain([0, tics-1 + (999/1000)]).range([0, 2 * Math.PI]);
 
-        var line = d3.svg.arc()
-            .innerRadius(90)
-            .outerRadius(110)
-            .startAngle( function(d) { return scale(d); } )
-            .endAngle(   function(d) { return scale(d); } );
+        var generateLines = function(innerR, outerR) {
+            return d3.svg.arc()
+                .innerRadius(innerR)
+                .outerRadius(outerR)
+                .startAngle( function(d) { return scale(d); } )
+                .endAngle(   function(d) { return scale(d); } );
+        };
 
-        var line2 = d3.svg.arc()
-            .innerRadius(80)
-            .outerRadius(90)
-            .startAngle( function(d) { return scale(d); } )
-            .endAngle(   function(d) { return scale(d); } );
-
+        var line = generateLines(90, 110);
+        var line2 = generateLines(80, 90);
         var data = [];
         for(var i=0; i < tics; i++) {
             data.push(i);
