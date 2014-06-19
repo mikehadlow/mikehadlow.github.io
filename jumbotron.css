@@ -19,3 +19,9 @@ body {
     margin-top: -40px;
     display: inline-block;
 }
+
+.overlay {
+    position:absolute;
+    top:50px;
+    left:0px;
+}
