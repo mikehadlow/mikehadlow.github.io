@@ -195,14 +195,14 @@
         var scale = d3.scale.linear().domain([0, tics-1 + (999/1000)]).range([0, 2 * Math.PI]);
 
         var line = d3.svg.arc()
-            .innerRadius(80)
+            .innerRadius(100)
             .outerRadius(120)
             .startAngle( function(d) { return scale(d); } )
             .endAngle(   function(d) { return scale(d); } );
 
         var line2 = d3.svg.arc()
-            .innerRadius(40)
-            .outerRadius(80)
+            .innerRadius(80)
+            .outerRadius(100)
             .startAngle( function(d) { return scale(d); } )
             .endAngle(   function(d) { return scale(d); } );
 
