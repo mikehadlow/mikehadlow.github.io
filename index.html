@@ -199,7 +199,7 @@
                 .innerRadius(innerR)
                 .outerRadius(outerR)
                 .startAngle( function(d) { return scale(d); } )
-                .endAngle(   function(d + 0.5) { return scale(d); } );
+                .endAngle(   function(d) { return scale(d + 0.5); } );
         };
 
         var line = generateLines(90, 110);
