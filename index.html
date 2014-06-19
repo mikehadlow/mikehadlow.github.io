@@ -222,7 +222,7 @@
             .style("fill", "none");
 
         var rotation = 0;
-        canvas.on("click", function () {
+        var animate = function () {
             rotation = rotation + 180;
 
             lines.transition()
@@ -236,7 +236,11 @@
             if(rotation == 360) {
                 rotation = 0;
             }
-        });
+        };
+
+        canvas.on("click", animate);
+
+        setTimeout(animate, 2000);
 
     </script>
   
