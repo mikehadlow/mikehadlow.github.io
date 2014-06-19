@@ -212,7 +212,7 @@
             rotation += 10;
             lines.transition()
                 .duration(500)
-                .attr("transform", "translate(200, 150) rotate(10)");
+                .attr("transform", "translate(200, 150) rotate(" + rotation + ")");
 
             if(rotation = 360) {
                 rotation = 0;
