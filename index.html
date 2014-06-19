@@ -187,7 +187,9 @@
 
         var lines = canvas.append("g").attr("transform", "translate(200, 150)");
 
-        var scale = d3.scale.linear().domain([0, 15]).range([0, 2 * Math.PI]);
+        var tics = 16;
+
+        var scale = d3.scale.linear().domain([0, tics-1]).range([0, 2 * Math.PI]);
 
         var line = d3.svg.arc()
             .innerRadius(80)
@@ -196,7 +198,7 @@
             .endAngle(   function(d) { return scale(d); } );
 
         var data = [];
-        for(var i=0; i < 16; i++) {
+        for(var i=0; i < tics; i++) {
             data.push(i);
         }
 
