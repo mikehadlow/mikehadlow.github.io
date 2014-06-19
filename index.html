@@ -207,6 +207,12 @@
             .style("stroke", "white")
             .style("fill", "none");
 
+        setInterval(function() {
+            lines.transition()
+                .duration(500)
+                .attr("transform", "rotate(30)");
+        }, 1000);
+
     </script>
   
   </body>
