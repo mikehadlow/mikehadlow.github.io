@@ -180,10 +180,21 @@
 
         var circle = canvas.append("circle")
             .attr("cx", 200)
-            .attr("cy", 200)
+            .attr("cy", 150)
             .attr("r", 100)
             .style("stroke", "white")
             .style("fill", "none");
+
+        var lines = canvas.append("g");
+        for(var i=0; i < 16; i++) {
+            lines.append("line")
+                .attr("x1", 200)
+                .attr("y1", 150)
+                .attr("x2", 300)
+                .attr("y2", 150 + (i * 10))
+                .style("stroke", "white")
+                .style("fill", "none");
+        }
 
     </script>
   
