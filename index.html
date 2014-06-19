@@ -163,15 +163,29 @@
     </div> <!-- /container -->
 
     <div class="overlay">
-        <svg width="400px" height="300px">
-            <circle cx="200" cy="150" r="100" style="stroke: white; fill: none;" />
+        <svg class="overlaycanvas" width="400px" height="300px">
         </svg>
     </div>
-
+    
     <!-- Bootstrap core JavaScript
     ================================================== -->
     <!-- Placed at the end of the document so the pages load faster -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
     <script src="http://netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+    <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+
+    <script>
+
+        var canvas = d3.select(".overlaycanvas");
+
+        var circle = canvas.append("circle")
+            .attr("cx", 200)
+            .attr("cy", 200)
+            .attr("r", 100)
+            .style("stroke", "white")
+            .style("fill", "none");
+
+    </script>
+  
   </body>
 </html>
