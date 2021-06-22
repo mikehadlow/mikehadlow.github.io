@@ -1,0 +1,9 @@
+{{ define "content"}}
+                <h1 class="title">{{ .Page.Title }}</h1>
+                <p>This is the list.html template.</p>
+                <ul>
+                    {{ range .Pages }}
+                    <li><a href="{{ .Permalink }}">{{ .Title }}</a></li>
+                    {{ end }}
+                </ul>
+{{ end }}
