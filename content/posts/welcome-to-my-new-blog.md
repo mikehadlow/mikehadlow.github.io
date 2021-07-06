@@ -17,7 +17,7 @@ The Blog turned out to be far more successful than I'd ever expected. I remember
 
 I originally chose the Blogger platform for my blog because I wanted an off-the-shelf solution rather than attempting to build my own and Blogger was well regarded at the time. I also suspected that using a Google owned platform wouldn't hurt search rankings. One of my biggest regrets is that I stuck with the default `mikehadlow.blogspot.com` domain rather than using my own. By the time I'd realized my mistake I already had very strong rankings for many of my posts and I was loath to lose that by changing the domain.
 
-For it's day Blogger was fine, especially when paired with Microsoft's Live Writer tool (now open source and rebranded as [Open Live Writer](https://openlivewriter.com/)). There were various plugins that helped format code and support for image upload and sizing. However neither Blogger nor Live Writer has been well supported in recent years and both break not infrequently and feel very much like tools from a much earlier era.
+For its day Blogger was fine, especially when paired with Microsoft's Live Writer tool (now open source and rebranded as [Open Live Writer](https://openlivewriter.com/)). There were various plugins that helped format code and support for image upload and sizing. However neither Blogger nor Live Writer has been well supported in recent years and both break not infrequently and feel very much like tools from a much earlier era.
 
 ### The New Blog
 
