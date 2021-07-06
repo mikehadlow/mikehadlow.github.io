@@ -1,5 +1,8 @@
 ---
 title: About
+date: 2021-07-06
+draft: false
+author: Mike Hadlow
 ---
 ![Mike](/img/mike.jpg)
 

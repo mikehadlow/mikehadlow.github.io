@@ -1,5 +1,8 @@
 ---
 title: Contact
+date: 2021-07-06
+draft: false
+author: Mike Hadlow
 ---
 
 | Service | Address |
