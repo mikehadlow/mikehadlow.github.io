@@ -3,6 +3,9 @@ title: "Markdown Test Page"
 date: 2021-02-19
 draft: true
 ---
+This is a test page for [markdown](https://www.markdownguide.org/tools/hugo/) formatting.
+<!--more-->
+
 # h1 Heading 8-)
 ## h2 Heading
 ### h3 Heading

@@ -1,5 +1,6 @@
 {{ define "content" }}
             <h1 class="title">{{ .Page.Title }}</h1>
+            <p class="subtitle">By {{ .Page.Params.author }}, published {{ .Page.Date.Format "Jan 2, 2006" }}</p>
             <div>
                 <article id="content" class="content">
                     {{ .Content }}
