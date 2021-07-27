@@ -4,10 +4,10 @@
 <meta name=viewport content="width=device-width,initial-scale=1">
 <meta name=description content="Mike Hadlow C# .NET technical blog.">
 <meta name=author content="Mike Hadlow">
-<meta property="og:url" content="https://mikehadlow.com/posts/simple-console-loop/">
+<meta property="og:url" content="https://mikehadlow.com/posts/standalone-consoleloggerprovider/">
 <meta property="og:type" content="article">
-<meta property="og:title" content="A Simple Console Periodic Loop in C#">
-<meta property="og:description" content="I found myself writing the same code several times for a simple console periodic loop, so I&rsquo;m posting the framework here mainly for my own benefit. This uses C# 7&rsquo;s new async Main entry point and avoids the need to spawn a new thread for the loop. Worth noting though that each iteration after the Task.Delay will run on a threadpool thread.">
+<meta property="og:title" content="How to create a standalone ConsoleLoggerProvider">
+<meta property="og:description" content="If, for whatever reason you want to create a stand alone instance of ConsoleLoggerProvider without having to leverage dependency injection and the full Hosting framework, you&rsquo;ll find that the ConsoleLoggerProvider&rsquo;s constructor requires an instance of an IOptionsMonitor<T>, the only instance of which OptionsMonitor<T> in turn has a complex constructor with many dependencies. This all seems like a failure of design on Microsoft&rsquo;s part. Here I give a simple no-op IOptionsMonitor<T> implementation to allow one to easily create a ConsoleLoggerProvider.">
 <meta property="og:image" content="https://mikehadlow.com/img/blog-image.png">
 <title>Mike Hadlow</title>
 <link rel=stylesheet href=https://cdn.jsdelivr.net/npm/bulma@0.9.1/css/bulma.min.css>
@@ -41,51 +41,44 @@
 <div class=container>
 <div class=columns>
 <div class="column is-two-thirds">
-<h1 class=title>A Simple Console Periodic Loop in C#</h1>
-<p class=subtitle>By Mike Hadlow, published Jul 9, 2021</p>
+<h1 class=title>How to create a standalone ConsoleLoggerProvider</h1>
+<p class=subtitle>By Mike Hadlow, published Jul 27, 2021</p>
 <div>
 <article id=content class=content>
-<p>I found myself writing the same code several times for a simple console periodic loop, so I&rsquo;m posting the framework here mainly for my own benefit. This uses C# 7&rsquo;s new async Main entry point and avoids the need to spawn a new thread for the loop. Worth noting though that each iteration after the <code>Task.Delay</code> will run on a threadpool thread.</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-C# data-lang=C#><span style=color:#66d9ef>using</span> System;
-<span style=color:#66d9ef>using</span> System.Threading;
-<span style=color:#66d9ef>using</span> System.Threading.Tasks;
-<span style=color:#66d9ef>using</span> static System.Console;
+<p>If, for whatever reason you want to create a stand alone instance of <code>ConsoleLoggerProvider</code> without having to leverage dependency injection and the full Hosting framework, you&rsquo;ll find that the <code>ConsoleLoggerProvider</code>&rsquo;s constructor requires an instance of an <code>IOptionsMonitor&lt;T></code>, the only instance of which <code>OptionsMonitor&lt;T></code> in turn has a complex constructor with many dependencies. This all seems like a failure of design on Microsoft&rsquo;s part. Here I give a simple no-op <code>IOptionsMonitor&lt;T></code> implementation to allow one to easily create a <code>ConsoleLoggerProvider</code>.</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-C# data-lang=C#><span style=color:#66d9ef>using</span> Microsoft.Extensions.Logging.Console;
+<span style=color:#66d9ef>using</span> Microsoft.Extensions.Options;
+<span style=color:#66d9ef>using</span> System;
 
-<span style=color:#66d9ef>namespace</span> SimpleConsoleLoop
+<span style=color:#66d9ef>namespace</span> Sample
 {
     <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>Program</span>
     {
-        <span style=color:#66d9ef>static</span> Task Main()
+        <span style=color:#66d9ef>static</span> <span style=color:#66d9ef>void</span> Main()
         {
-            <span style=color:#66d9ef>var</span> cts = <span style=color:#66d9ef>new</span> CancellationTokenSource();
+            <span style=color:#66d9ef>var</span> loggerProvider = <span style=color:#66d9ef>new</span> ConsoleLoggerProvider(<span style=color:#66d9ef>new</span> OptionsMonitor&lt;ConsoleLoggerOptions&gt;(<span style=color:#66d9ef>new</span> ConsoleLoggerOptions()));
+            <span style=color:#75715e>// use the loggerProvider ...
+</span><span style=color:#75715e></span>        }
+    }
 
-            CancelKeyPress += (<span style=color:#ae81ff>_</span>, args) =&gt; 
-            {
-                cts.Cancel();
-                cts.Dispose();
-                args.Cancel = <span style=color:#66d9ef>true</span>;
-            };
+    <span style=color:#66d9ef>public</span> <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>OptionsMonitor</span>&lt;T&gt; : IOptionsMonitor&lt;T&gt;
+    {
+        <span style=color:#66d9ef>private</span> <span style=color:#66d9ef>readonly</span> T options;
 
-            WriteLine(<span style=color:#e6db74>&#34;Starting loop. Ctrl-C to stop.&#34;</span>);
-            <span style=color:#66d9ef>return</span> RunLoop(cts.Token);
+        <span style=color:#66d9ef>public</span> OptionsMonitor(T options)
+        {
+            <span style=color:#66d9ef>this</span>.options = options;
         }
 
-        <span style=color:#66d9ef>static</span> <span style=color:#66d9ef>async</span> Task RunLoop(CancellationToken cancellation)
-        {
-            <span style=color:#66d9ef>try</span>
-            {
-                <span style=color:#66d9ef>while</span> (!cancellation.IsCancellationRequested)
-                {
-                    <span style=color:#66d9ef>await</span> Task.Delay(<span style=color:#ae81ff>1000</span>, cancellation);
+        <span style=color:#66d9ef>public</span> T CurrentValue =&gt; options;
 
-                    WriteLine(<span style=color:#e6db74>$&#34;Loop! On thread: {Thread.CurrentThread.ManagedThreadId}&#34;</span>);
-                }
-            }
-            <span style=color:#66d9ef>catch</span> (TaskCanceledException) { }
-            <span style=color:#66d9ef>catch</span> (Exception exception)
-            {
-                WriteLine(exception.ToString());
-            }
+        <span style=color:#66d9ef>public</span> T Get(<span style=color:#66d9ef>string</span> name) =&gt; options;
+
+        <span style=color:#66d9ef>public</span> IDisposable OnChange(Action&lt;T, <span style=color:#66d9ef>string</span>&gt; listener) =&gt; <span style=color:#66d9ef>new</span> NullDisposable();
+
+        <span style=color:#66d9ef>private</span> <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>NullDisposable</span> : IDisposable
+        {
+            <span style=color:#66d9ef>public</span> <span style=color:#66d9ef>void</span> Dispose() { }
         }
     }
 }
