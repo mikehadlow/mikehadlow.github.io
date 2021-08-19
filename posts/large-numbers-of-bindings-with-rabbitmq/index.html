@@ -1,0 +1,148 @@
+<!doctype html><html>
+<head>
+<meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta name=description content="Mike Hadlow C# .NET technical blog.">
+<meta name=author content="Mike Hadlow">
+<meta property="og:url" content="https://mikehadlow.com/posts/large-numbers-of-bindings-with-rabbitmq/">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Large Numbers of Bindings With RabbitMQ">
+<meta property="og:description" content="RabbitMQ (or more specifically the AMQP protocol) provides a degree of flexibility over other message-queue solutions with its exchange-binding-queue model. Some possible solutions to scaling or business issues result in large numbers of bindings being created, perhaps thousands per queue. We tested RabbitMQ to find out what the binding performance limits were and present the results in this post. It seems that large numbers of bindings are not in themselves a performance issue, but on a RabbitMQ cluster, &ldquo;binding churn&rdquo; the rate at which they are created and destroyed can have a large impact on message delivery.">
+<meta property="og:image" content="https://mikehadlow.com/img/blog-image.png">
+<title>Mike Hadlow</title>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/bulma@0.9.1/css/bulma.min.css>
+</head>
+<body>
+<nav class="navbar is-dark" role=navigation aria-label="main navigation">
+<div class=container>
+<div class=navbar-brand>
+<a href=/ class=navbar-item>
+<strong>Mike Hadlow</strong>
+</a>
+<a role=button class=navbar-burger aria-label=menu aria-expanded=false data-target=menu>
+<span aria-hidden=true></span>
+<span aria-hidden=true></span>
+<span aria-hidden=true></span>
+</a>
+</div>
+<div id=menu class=navbar-menu>
+<div class=navbar-start>
+<a href=https://mikehadlow.com/top/about/ class=navbar-item>About</a>
+<a href=https://mikehadlow.com/top/contact/ class=navbar-item>Contact</a>
+<a href=https://twitter.com/mikehadlow target=_blank rel="noopener noreferrer" class=navbar-item><svg height="24" viewBox="328 355 335 276" width="24" aria-hidden="true"><path style="fill:#3ba9ee" d="M630 425A195 195 0 01331 6e2a142 142 0 0097-30 70 70 0 01-58-47 70 70 0 0031-2 70 70 0 01-57-66 70 70 0 0028 5 70 70 0 01-18-90 195 195 0 00141 72 67 67 0 01116-62 117 117 0 0043-17 65 65 0 01-31 38 117 117 0 0039-11 65 65 0 01-32 35z"/></svg>
+</a>
+<a href=https://github.com/mikehadlow target=_blank rel="noopener noreferrer" class=navbar-item><svg height="24" viewBox="0 0 16 16" width="24" aria-hidden="true"><path style="fill:#fff" fill-rule="evenodd" d="M8 0C3.58.0.0 3.58.0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38.0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95.0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12.0.0.67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15.0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48.0 1.07-.01 1.93-.01 2.2.0.21.15.46.55.38A8.013 8.013.0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+</a>
+</div>
+</div>
+</div>
+</nav>
+<section class=section>
+<div class=container>
+<div class=columns>
+<div class="column is-two-thirds">
+<h1 class=title>Large Numbers of Bindings With RabbitMQ</h1>
+<p class=subtitle>By Mike Hadlow, published Aug 19, 2021</p>
+<div>
+<article id=content class=content>
+<p>RabbitMQ (or more specifically the AMQP protocol) provides a degree of flexibility over other message-queue solutions with its exchange-binding-queue model. Some possible solutions to scaling or business issues result in large numbers of bindings being created, perhaps thousands per queue. We tested RabbitMQ to find out what the binding performance limits were and present the results in this post. It seems that large numbers of bindings are not in themselves a performance issue, but on a RabbitMQ cluster, &ldquo;binding churn&rdquo; the rate at which they are created and destroyed can have a large impact on message delivery.</p>
+<p><em>I don&rsquo;t intend this post as a tutorial on the exchange-binding-queue model, for an excellent introduction see the <a href=https://www.rabbitmq.com/tutorials/tutorial-four-dotnet.html>RabbitMQ documentation</a>.</em></p>
+<p>We were interested in looking at solutions which allowed us to shard our consumers by collections of particular entity IDs, with possibly thousands of entities being active during any time period. To test this I created a producer and consumer that would create arbitrary numbers of bindings to any number of consumers all bound to a single exchange and also enable us to scale the message rates published to the exchange.</p>
+<p>The test harnesses are available on GitHub <a href=https://github.com/mikehadlow/RmqBindingTest>here</a>. The readme gives detailed instructions on how to run the tests.</p>
+<p>I ran my first set of tests against a single instance RMQ broker and got these results:</p>
+<p><strong>10 Consumers. 500 messages/second</strong></p>
+<table>
+<thead>
+<tr>
+<th>Bindings/Queue</th>
+<th>RMQ Mem</th>
+<th>Erlang Processes</th>
+<th>CPU (server)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>292</td>
+<td>1754</td>
+<td>10</td>
+</tr>
+<tr>
+<td>10</td>
+<td>293</td>
+<td>1754</td>
+<td>10</td>
+</tr>
+<tr>
+<td>100</td>
+<td>292</td>
+<td>1754</td>
+<td>10</td>
+</tr>
+<tr>
+<td>1000</td>
+<td>288</td>
+<td>1754</td>
+<td>10</td>
+</tr>
+</tbody>
+</table>
+<p><strong>10 Consumers. 4000 messages/second</strong></p>
+<table>
+<thead>
+<tr>
+<th>Bindings/Queue</th>
+<th>RMQ Mem</th>
+<th>Erlang Processes</th>
+<th>CPU (server)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>550</td>
+<td>2370</td>
+<td>32</td>
+</tr>
+<tr>
+<td>10</td>
+<td>475</td>
+<td>2370</td>
+<td>33</td>
+</tr>
+<tr>
+<td>100</td>
+<td>293</td>
+<td>2370</td>
+<td>33</td>
+</tr>
+<tr>
+<td>1000</td>
+<td>300</td>
+<td>2370</td>
+<td>33</td>
+</tr>
+</tbody>
+</table>
+<p>The striking result is that it seems to make almost no difference to performance how many bindings one has, at least up to the total of 10,000 that I pushed it to (Our scenario didn&rsquo;t envisage larger numbers than this, so I didn&rsquo;t test any higher). This suggests that the internal routing algorithm is very efficient, at least O(log n). Internally I believe it uses a <a href=https://en.wikipedia.org/wiki/Trie>trie</a> data structure.</p>
+<p>One thing I did notice though, was that with large numbers of bindings there was a slight delay, in the order of a few seconds or tens of seconds, from the bindings' creation to the delivery of the first message.</p>
+<p><strong>3 Node Cluster</strong></p>
+<p>Moving onto testing against a 3 node cluster the performance results were very similar to those above and didn&rsquo;t change notably as the number of bindings rose (so I haven&rsquo;t included them here). This was with the producers and consumers connecting via a front side load balancing proxy which resulted in the ten producers and ten consumers being evenly distributed across the nodes. However what was immediately noticeable was a much longer delay between creating the bindings and the first message being delivered to the consumers. With 1000 bindings per queue it took over 5 minutes for the first message to be delivered. It seems that the prime performance bottleneck is the time it takes for the Erlang infrastructure to distribute the bindings to the cluster. It suggests that if one is going to create large numbers of bindings on a RabbitMQ cluster that one needs to be very aware of &ldquo;binding churn&rdquo;, the rate at which the bindings are created and removed because this can have a major impact on message delivery.</p>
+</article>
+</div>
+</div>
+<div class="column is-one-third box">
+<div class=content>
+<p><strong>Hi, I&rsquo;m Mike Hadlow. Software developer, architect, blogger and open source developer.</strong></p>
+<p>Find my old blog at <a href=http://mikehadlow.blogspot.com/>Code Rant</a>. This ran from 2005 to 2020 and has hundreds of posts.</p>
+<p><em>All code on this blog is published under an <a href=https://opensource.org/licenses/MIT>MIT licence</a>. You are free to copy it and use it for any purpose without attribution. There is no warranty whatsoever.</em></p>
+<p><strong>There are no cookies on this site</strong></p>
+<p>The GitHub repository for this site is <a href=https://github.com/mikehadlow/mikehadlow.github.io>here</a>.</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+</body>
+<script>document.addEventListener('DOMContentLoaded',()=>{const a=Array.prototype.slice.call(document.querySelectorAll('.navbar-burger'),0);a.length>0&&a.forEach(a=>{a.addEventListener('click',()=>{const b=a.dataset.target,c=document.getElementById(b);a.classList.toggle('is-active'),c.classList.toggle('is-active')})})})</script>
+</html>
