@@ -122,3 +122,5 @@ var readerTask = BlockingReader.Listen(
 ```
 
 I've also shared a worked example on GitHub, [RedisStreamReader](https://github.com/mikehadlow/RedisStreamReader), of a simple console application that publishes to a stream and uses the method above to listen for new messages.
+
+Discuss on [Reddit](https://www.reddit.com/r/programming/comments/svn2m0/blocking_xread_from_a_redis_stream_using/)
