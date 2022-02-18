@@ -73,6 +73,7 @@ public static class BlockingReader
                         foreach(RedisResult[] messages in (RedisResult[])subresults[1])
                         {
                             var id = (RedisValue)messages[0];
+                            currentId = id;
 
                             var nameValuePairs = (RedisResult[])messages[1];
                             var pairs = new Pair[nameValuePairs.Length/2];
