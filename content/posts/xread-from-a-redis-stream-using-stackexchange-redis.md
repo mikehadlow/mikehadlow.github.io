@@ -105,4 +105,20 @@ public record Entry(RedisValue StreamName, RedisValue Id, Pair[] Values);
 
 public record Pair(RedisValue Name, RedisValue Value);
 ```
+You can use this method like this:
+```C#
+var readerTask = BlockingReader.Listen(
+    "localhost", 
+    "my-stream", 
+    cts.Token,
+    entry => 
+    {
+        WriteLine($"\tId: {entry.Id}");
+        foreach(var pair in entry.Values)
+        {
+            WriteLine($"\t\t{pair.Name}: {pair.Value}");
+        }
+    });
+```
+
 I've also shared a worked example on GitHub, [RedisStreamReader](https://github.com/mikehadlow/RedisStreamReader), of a simple console application that publishes to a stream and uses the method above to listen for new messages.
