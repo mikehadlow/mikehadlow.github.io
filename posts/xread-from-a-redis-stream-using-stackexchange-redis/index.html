@@ -108,6 +108,7 @@
                         <span style=color:#66d9ef>foreach</span>(RedisResult[] messages <span style=color:#66d9ef>in</span> (RedisResult[])subresults[<span style=color:#ae81ff>1</span>])
                         {
                             <span style=color:#66d9ef>var</span> id = (RedisValue)messages[<span style=color:#ae81ff>0</span>];
+                            currentId = id;
 
                             <span style=color:#66d9ef>var</span> nameValuePairs = (RedisResult[])messages[<span style=color:#ae81ff>1</span>];
                             <span style=color:#66d9ef>var</span> pairs = <span style=color:#66d9ef>new</span> Pair[nameValuePairs.Length/<span style=color:#ae81ff>2</span>];
