@@ -50,6 +50,24 @@
 <div class=card-content>
 <div class=content>
 <p>
+<a href=https://mikehadlow.com/posts/xread-from-a-redis-stream-using-stackexchange-redis/><strong>Blocking XREAD From A Redis Stream Using StackExchange.Redis</strong></a>
+<br>
+<em>Feb 18, 2022</em>
+</p>
+<p>
+<p>The <a href=https://github.com/StackExchange/StackExchange.Redis>StackExchange.Redis</a> NuGet package is the most popular .NET client for <a href=https://redis.io/>Redis</a>. It&rsquo;s stable, high-performance, with a great community and wide usage. One of it&rsquo;s most interesting features is the way it does network <a href=https://stackexchange.github.io/StackExchange.Redis/PipelinesMultiplexers.html#multiplexing>multiplexing</a>. This allows multi-threaded applications to use a single TCP/IP connection without blocking. Unfortunately this also means that the library does not support blocking operations such as <code>XREAD BLOCK</code>, which is important if you want to leverage <a href=https://redis.io/topics/streams-intro>Redis Streams</a> on .NET. This post offers a work-around for this.</p>
+</p>
+<p>
+<a href=https://mikehadlow.com/posts/xread-from-a-redis-stream-using-stackexchange-redis/><em>Read more...</em></a>
+</p>
+</div>
+</div>
+</li>
+<br>
+<li class=card>
+<div class=card-content>
+<div class=content>
+<p>
 <a href=https://mikehadlow.com/posts/large-numbers-of-bindings-with-rabbitmq/><strong>Large Numbers of Bindings With RabbitMQ</strong></a>
 <br>
 <em>Aug 19, 2021</em>
