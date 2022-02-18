@@ -139,6 +139,19 @@
 <span style=color:#66d9ef>public</span> record Entry(RedisValue StreamName, RedisValue Id, Pair[] Values);
 
 <span style=color:#66d9ef>public</span> record Pair(RedisValue Name, RedisValue Value);
+</code></pre></div><p>You can use this method like this:</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-C# data-lang=C#><span style=color:#66d9ef>var</span> readerTask = BlockingReader.Listen(
+    <span style=color:#e6db74>&#34;localhost&#34;</span>, 
+    <span style=color:#e6db74>&#34;my-stream&#34;</span>, 
+    cts.Token,
+    entry =&gt; 
+    {
+        WriteLine(<span style=color:#e6db74>$&#34;\tId: {entry.Id}&#34;</span>);
+        <span style=color:#66d9ef>foreach</span>(<span style=color:#66d9ef>var</span> pair <span style=color:#66d9ef>in</span> entry.Values)
+        {
+            WriteLine(<span style=color:#e6db74>$&#34;\t\t{pair.Name}: {pair.Value}&#34;</span>);
+        }
+    });
 </code></pre></div><p>I&rsquo;ve also shared a worked example on GitHub, <a href=https://github.com/mikehadlow/RedisStreamReader>RedisStreamReader</a>, of a simple console application that publishes to a stream and uses the method above to listen for new messages.</p>
 </article>
 </div>
