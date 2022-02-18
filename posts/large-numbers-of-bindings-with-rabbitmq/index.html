@@ -129,7 +129,7 @@
 <p><strong>3 Node Cluster</strong></p>
 <p>Moving onto testing against a 3 node cluster the performance results were very similar to those above and didn&rsquo;t change notably as the number of bindings rose (so I haven&rsquo;t included them here). This was with the producers and consumers connecting via a front side load balancing proxy which resulted in the ten producers and ten consumers being evenly distributed across the nodes. However what was immediately noticeable was a much longer delay between creating the bindings and the first message being delivered to the consumers. With 1000 bindings per queue it took over 5 minutes for the first message to be delivered. Moreover, while the bindings are propagating throughout the cluster there is the possibility of message loss. In multiple test runs we saw fewer messages consumed than were published. In one example we lost 1121 messages out of 87180 published. However if we waited 10 minutes after creating the 10,000 bindings before we started publishing we saw no message loss whatsoever.</p>
 <p>Below is an example output from the <code>RmqBindingTest.StatsCollector.exe</code>, which collects message counts from publishers and consumers as they exit, showing the discrepancy (see the GitHub repo for details on this).</p>
-<pre><code>PUB:      10461, CON:          0, MSG: PUB|A7|10461
+<pre tabindex=0><code>PUB:      10461, CON:          0, MSG: PUB|A7|10461
 PUB:      21090, CON:          0, MSG: PUB|A6|10629
 PUB:      31842, CON:          0, MSG: PUB|A5|10752
 PUB:      42701, CON:          0, MSG: PUB|A4|10859
