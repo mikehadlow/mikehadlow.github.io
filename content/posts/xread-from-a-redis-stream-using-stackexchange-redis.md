@@ -1,7 +1,7 @@
 ---
 title: "Blocking XREAD From A Redis Stream Using StackExchange.Redis"
 date: 2022-02-18
-draft: true
+draft: false
 author: Mike Hadlow
 ---
 The [StackExchange.Redis](https://github.com/StackExchange/StackExchange.Redis) NuGet package is the most popular .NET client for [Redis](https://redis.io/). It's stable, high-performance, with a great community and wide usage. One of it's most interesting features is the way it does network [multiplexing](https://stackexchange.github.io/StackExchange.Redis/PipelinesMultiplexers.html#multiplexing). This allows multi-threaded applications to use a single TCP/IP connection without blocking. Unfortunately this also means that the library does not support blocking operations such as `XREAD BLOCK`, which is important if you want to leverage [Redis Streams](https://redis.io/topics/streams-intro) on .NET. This post offers a work-around for this.
