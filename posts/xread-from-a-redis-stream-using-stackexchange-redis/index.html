@@ -1,175 +1,99 @@
-<!doctype html><html>
-<head>
-<meta charset=utf-8>
-<meta name=viewport content="width=device-width,initial-scale=1">
-<meta name=description content="Mike Hadlow C# .NET technical blog.">
-<meta name=author content="Mike Hadlow">
-<meta property="og:url" content="https://mikehadlow.com/posts/xread-from-a-redis-stream-using-stackexchange-redis/">
-<meta property="og:type" content="article">
-<meta property="og:title" content="Blocking XREAD From A Redis Stream Using StackExchange.Redis">
-<meta property="og:description" content="The StackExchange.Redis NuGet package is the most popular .NET client for Redis. It&rsquo;s stable, high-performance, with a great community and wide usage. One of it&rsquo;s most interesting features is the way it does network multiplexing. This allows multi-threaded applications to use a single TCP/IP connection without blocking. Unfortunately this also means that the library does not support blocking operations such as XREAD BLOCK, which is important if you want to leverage Redis Streams on .NET. This post offers a work-around for this.">
-<meta property="og:image" content="https://mikehadlow.com/img/blog-image.png">
-<title>Mike Hadlow</title>
-<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/bulma@0.9.1/css/bulma.min.css>
-</head>
-<body>
-<nav class="navbar is-dark" role=navigation aria-label="main navigation">
-<div class=container>
-<div class=navbar-brand>
-<a href=/ class=navbar-item>
-<strong>Mike Hadlow</strong>
-</a>
-<a role=button class=navbar-burger aria-label=menu aria-expanded=false data-target=menu>
+<!doctype html><html><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta name=description content="Mike Hadlow C# .NET technical blog."><meta name=author content="Mike Hadlow"><meta property="og:url" content="https://mikehadlow.com/posts/xread-from-a-redis-stream-using-stackexchange-redis/"><meta property="og:type" content="article"><meta property="og:title" content="Blocking XREAD From A Redis Stream Using StackExchange.Redis"><meta property="og:description" content="The StackExchange.Redis NuGet package is the most popular .NET client for Redis. It&rsquo;s stable, high-performance, with a great community and wide usage. One of it&rsquo;s most interesting features is the way it does network multiplexing. This allows multi-threaded applications to use a single TCP/IP connection without blocking. Unfortunately this also means that the library does not support blocking operations such as XREAD BLOCK, which is important if you want to leverage Redis Streams on .NET. This post offers a work-around for this."><meta property="og:image" content="https://mikehadlow.com/img/blog-image.png"><title>Mike Hadlow</title><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/bulma@0.9.1/css/bulma.min.css></head><body><nav class="navbar is-dark" role=navigation aria-label="main navigation"><div class=container><div class=navbar-brand><a href=/ class=navbar-item><strong>Mike Hadlow</strong></a>
+<a role=button class=navbar-burger aria-label=menu aria-expanded=false data-target=menu><span aria-hidden=true></span>
 <span aria-hidden=true></span>
-<span aria-hidden=true></span>
-<span aria-hidden=true></span>
-</a>
-</div>
-<div id=menu class=navbar-menu>
-<div class=navbar-start>
-<a href=https://mikehadlow.com/top/about/ class=navbar-item>About</a>
+<span aria-hidden=true></span></a></div><div id=menu class=navbar-menu><div class=navbar-start><a href=https://mikehadlow.com/top/about/ class=navbar-item>About</a>
 <a href=https://mikehadlow.com/top/contact/ class=navbar-item>Contact</a>
-<a href=https://twitter.com/mikehadlow target=_blank rel="noopener noreferrer" class=navbar-item><svg height="24" viewBox="328 355 335 276" width="24" aria-hidden="true"><path style="fill:#3ba9ee" d="M630 425A195 195 0 01331 6e2a142 142 0 0097-30 70 70 0 01-58-47 70 70 0 0031-2 70 70 0 01-57-66 70 70 0 0028 5 70 70 0 01-18-90 195 195 0 00141 72 67 67 0 01116-62 117 117 0 0043-17 65 65 0 01-31 38 117 117 0 0039-11 65 65 0 01-32 35z"/></svg>
-</a>
-<a href=https://github.com/mikehadlow target=_blank rel="noopener noreferrer" class=navbar-item><svg height="24" viewBox="0 0 16 16" width="24" aria-hidden="true"><path style="fill:#fff" fill-rule="evenodd" d="M8 0C3.58.0.0 3.58.0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38.0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95.0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12.0.0.67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15.0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48.0 1.07-.01 1.93-.01 2.2.0.21.15.46.55.38A8.013 8.013.0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
-</a>
-</div>
-</div>
-</div>
-</nav>
-<section class=section>
-<div class=container>
-<div class=columns>
-<div class="column is-two-thirds">
-<h1 class=title>Blocking XREAD From A Redis Stream Using StackExchange.Redis</h1>
-<p class=subtitle>By Mike Hadlow, published Feb 18, 2022</p>
-<div>
-<article id=content class=content>
-<p>The <a href=https://github.com/StackExchange/StackExchange.Redis>StackExchange.Redis</a> NuGet package is the most popular .NET client for <a href=https://redis.io/>Redis</a>. It&rsquo;s stable, high-performance, with a great community and wide usage. One of it&rsquo;s most interesting features is the way it does network <a href=https://stackexchange.github.io/StackExchange.Redis/PipelinesMultiplexers.html#multiplexing>multiplexing</a>. This allows multi-threaded applications to use a single TCP/IP connection without blocking. Unfortunately this also means that the library does not support blocking operations such as <code>XREAD BLOCK</code>, which is important if you want to leverage <a href=https://redis.io/topics/streams-intro>Redis Streams</a> on .NET. This post offers a work-around for this.</p>
-<p>From the StackExchange.Redis <a href=https://stackexchange.github.io/StackExchange.Redis/PipelinesMultiplexers.html#multiplexing>Multiplexing documentation</a></p>
-<blockquote>
-<p>&mldr; For this reason, the only redis features that StackExchange.Redis does not offer (and <em>will not ever offer</em>) are the “blocking pops” (<a href=https://redis.io/commands/blpop>BLPOP</a>, <a href=https://redis.io/commands/brpop>BRPOP</a> and <a href=https://redis.io/commands/brpoplpush>BRPOPLPUSH</a>) - because this would allow a single caller to stall the entire multiplexer, blocking all other callers.</p>
-</blockquote>
-<p>Redis Streams have been available since Redis version 5.0. They implement an append only log. One of the key features is the ability for clients to listen for new stream entries in a way analogous to a queue subscriber in a messaging system. This is implemented with the <a href=https://redis.io/commands/xread><code>XREAD BLOCK</code></a> command. The <code>XREAD</code> command can also be used without <code>BLOCK</code>, so an alternative is to simply poll the server, but this introduces a polling interval latency that&rsquo;s unacceptable with high throughput systems.</p>
-<p>The lack of <code>XREAD</code> provision for StackExchange.Redis has lead to much discussion on Stack Overflow and GitHub; see <a href=https://stackoverflow.com/questions/58762692/how-to-do-a-blocking-read-from-c-sharp-stackexchange-redis-nuget-package-on-redi>here</a> and <a href=https://github.com/StackExchange/StackExchange.Redis/issues/1158#issuecomment-499389882>here</a> for example. There has been a <a href=https://github.com/StackExchange/StackExchange.Redis/issues/886>task to rewrite the internals to support blocking operations</a> since 2018, but it is still open. I expect that until Stack Overflow themselves find a need for blocking operations we&rsquo;re unlikely to see it, especially now that the author, the hugely prolific, <a href=https://twitter.com/marcgravell>Marc Gravell</a> (who someone really should pay just to work on open source) has moved onto Microsoft.</p>
-<p>My colleague Marc Stedman has been experimenting with the low level StackExchange.Redis <code>ExecuteAync</code> method to issue the raw <code>XREAD BLOCK</code> command to the server. Of course because of the multiplexer this will block all other operations, so it&rsquo;s important to run it on a dedicated connection. Marc Gravell also says this on <a href=https://github.com/StackExchange/StackExchange.Redis/issues/1117#issuecomment-481844315>this thread</a>:</p>
-<blockquote>
-<p>If you use the raw commands API to execute blocking operations, you should expect bad things to happen. For example, from the connection&rsquo;s perspective, it won&rsquo;t be responding to periodic heartbeat health checks, so it will sever the connection every so often.</p>
-</blockquote>
-<p>However, if we keep the blocking period short, say 500ms, then there&rsquo;s less chance of timeouts. There&rsquo;s obviously a trade off between a shorter interval pummeling the server with read requests, especially if you have lots of clients. In our experiments we&rsquo;ve not seen any issues so far.</p>
-<p>The other (minor) disadvantage of using the raw <code>ExecuteAsync</code> command is that the stream entries are returned as a nested <code>RedisResult</code> tree, but it&rsquo;s straightforward to decode using the <code>XREAD</code> documentation.</p>
-<p>Below is an example implementation that you can modify for your own use:</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-C# data-lang=C#><span style=color:#66d9ef>using</span> StackExchange.Redis;
-<span style=color:#66d9ef>using</span> static System.Console;
-
-<span style=color:#66d9ef>public</span> <span style=color:#66d9ef>static</span> <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>BlockingReader</span>
-{
-    <span style=color:#66d9ef>public</span> <span style=color:#66d9ef>static</span> <span style=color:#66d9ef>async</span> Task Listen(
-        <span style=color:#66d9ef>string</span> connection, 
-        <span style=color:#66d9ef>string</span> streamName, 
-        CancellationToken cancellation,
-        Action&lt;Entry&gt; handler)
-    {
-        <span style=color:#75715e>// The blocking reader&#39;s connection should not be shared with any other operation.
-</span><span style=color:#75715e></span>        <span style=color:#66d9ef>var</span> redis = ConnectionMultiplexer.Connect(connection);
-        <span style=color:#66d9ef>if</span>(redis <span style=color:#66d9ef>is</span> <span style=color:#66d9ef>null</span>)
-        {
-            WriteLine(<span style=color:#e6db74>$&#34;Connection to {connection} failed&#34;</span>);
-            <span style=color:#66d9ef>return</span>;
-        }
-        WriteLine(<span style=color:#e6db74>$&#34;Started consuming from stream {streamName}&#34;</span>);
-
-        <span style=color:#66d9ef>try</span>
-        {
-            <span style=color:#66d9ef>var</span> db = redis.GetDatabase();
-
-            <span style=color:#66d9ef>var</span> currentId = <span style=color:#e6db74>&#34;$&#34;</span>; <span style=color:#75715e>// listen for new messages
-</span><span style=color:#75715e></span>            <span style=color:#66d9ef>while</span>(!cancellation.IsCancellationRequested)
-            {
-                <span style=color:#66d9ef>var</span> arguments = <span style=color:#66d9ef>new</span> List&lt;<span style=color:#66d9ef>object</span>&gt;
-                {
-                    <span style=color:#e6db74>&#34;BLOCK&#34;</span>,
-                    <span style=color:#e6db74>&#34;500&#34;</span>,
-                    <span style=color:#e6db74>&#34;STREAMS&#34;</span>,
-                    streamName,
-                    currentId
-                };
-
-                <span style=color:#75715e>// ExecuteAsync does not take a CancellationToken, so we have to wait the block time
-</span><span style=color:#75715e></span>                <span style=color:#75715e>// before resonding to a cancellation request.
-</span><span style=color:#75715e></span>                <span style=color:#66d9ef>var</span> result = <span style=color:#66d9ef>await</span> db.ExecuteAsync(<span style=color:#e6db74>&#34;XREAD&#34;</span>, arguments).ConfigureAwait(<span style=color:#66d9ef>false</span>);
-
-                <span style=color:#66d9ef>if</span>(!result.IsNull)
-                {
-                    <span style=color:#75715e>// should only be a single result if querying a single stream
-</span><span style=color:#75715e></span>                    <span style=color:#66d9ef>foreach</span> (RedisResult[] subresults <span style=color:#66d9ef>in</span> (RedisResult[])result)
-                    {
-                        <span style=color:#66d9ef>var</span> name = (RedisValue)subresults[<span style=color:#ae81ff>0</span>];
-                        <span style=color:#66d9ef>foreach</span>(RedisResult[] messages <span style=color:#66d9ef>in</span> (RedisResult[])subresults[<span style=color:#ae81ff>1</span>])
-                        {
-                            <span style=color:#66d9ef>var</span> id = (RedisValue)messages[<span style=color:#ae81ff>0</span>];
-                            currentId = id;
-
-                            <span style=color:#66d9ef>var</span> nameValuePairs = (RedisResult[])messages[<span style=color:#ae81ff>1</span>];
-                            <span style=color:#66d9ef>var</span> pairs = <span style=color:#66d9ef>new</span> Pair[nameValuePairs.Length/<span style=color:#ae81ff>2</span>];
-
-                            <span style=color:#66d9ef>for</span>(<span style=color:#66d9ef>var</span> i = <span style=color:#ae81ff>0</span>; i &lt; nameValuePairs.Length; i+=<span style=color:#ae81ff>2</span>)
-                            {
-                                pairs[i / <span style=color:#ae81ff>2</span>] = <span style=color:#66d9ef>new</span> Pair((RedisValue)nameValuePairs[i], (RedisValue)nameValuePairs[i + <span style=color:#ae81ff>1</span>]);
-                            }
-
-                            <span style=color:#66d9ef>var</span> entry = <span style=color:#66d9ef>new</span> Entry(name, id, pairs);
-                            handler(entry);
-                        }
-                    }
-                }
-            }
-        }
-        <span style=color:#66d9ef>catch</span> (TaskCanceledException) { }
-        <span style=color:#66d9ef>catch</span> (Exception ex)
-        {
-            WriteLine(ex.ToString());
-        }
-        <span style=color:#66d9ef>finally</span>
-        {
-            WriteLine(<span style=color:#e6db74>$&#34;Stopped consuming from stream {streamName}&#34;</span>);
-        }
-    }
-}
-
-<span style=color:#66d9ef>public</span> record Entry(RedisValue StreamName, RedisValue Id, Pair[] Values);
-
-<span style=color:#66d9ef>public</span> record Pair(RedisValue Name, RedisValue Value);
-</code></pre></div><p>You can use this method like this:</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-C# data-lang=C#><span style=color:#66d9ef>var</span> readerTask = BlockingReader.Listen(
-    <span style=color:#e6db74>&#34;localhost&#34;</span>, 
-    <span style=color:#e6db74>&#34;my-stream&#34;</span>, 
-    cts.Token,
-    entry =&gt; 
-    {
-        WriteLine(<span style=color:#e6db74>$&#34;\tId: {entry.Id}&#34;</span>);
-        <span style=color:#66d9ef>foreach</span>(<span style=color:#66d9ef>var</span> pair <span style=color:#66d9ef>in</span> entry.Values)
-        {
-            WriteLine(<span style=color:#e6db74>$&#34;\t\t{pair.Name}: {pair.Value}&#34;</span>);
-        }
-    });
-</code></pre></div><p>I&rsquo;ve also shared a worked example on GitHub, <a href=https://github.com/mikehadlow/RedisStreamReader>RedisStreamReader</a>, of a simple console application that publishes to a stream and uses the method above to listen for new messages.</p>
-<p>Discuss on <a href=https://www.reddit.com/r/programming/comments/svn2m0/blocking_xread_from_a_redis_stream_using/>Reddit</a></p>
-</article>
-</div>
-</div>
-<div class="column is-one-third box">
-<div class=content>
-<p><strong>Hi, I&rsquo;m Mike Hadlow. Software developer, architect, blogger and open source developer.</strong></p>
-<p>Find my old blog at <a href=http://mikehadlow.blogspot.com/>Code Rant</a>. This ran from 2005 to 2020 and has hundreds of posts.</p>
-<p><em>All code on this blog is published under an <a href=https://opensource.org/licenses/MIT>MIT licence</a>. You are free to copy it and use it for any purpose without attribution. There is no warranty whatsoever.</em></p>
-<p><strong>There are no cookies on this site</strong></p>
-<p>The GitHub repository for this site is <a href=https://github.com/mikehadlow/mikehadlow.github.io>here</a>.</p>
-</div>
-</div>
-</div>
-</div>
-</section>
-</body>
-<script>document.addEventListener('DOMContentLoaded',()=>{const a=Array.prototype.slice.call(document.querySelectorAll('.navbar-burger'),0);a.length>0&&a.forEach(a=>{a.addEventListener('click',()=>{const b=a.dataset.target,c=document.getElementById(b);a.classList.toggle('is-active'),c.classList.toggle('is-active')})})})</script>
-</html>
+<a href=https://twitter.com/mikehadlow target=_blank rel="noopener noreferrer" class=navbar-item><svg height="24" viewBox="328 355 335 276" width="24" aria-hidden="true"><path style="fill:#3ba9ee" d="M630 425A195 195 0 01331 6e2a142 142 0 0097-30 70 70 0 01-58-47 70 70 0 0031-2 70 70 0 01-57-66 70 70 0 0028 5 70 70 0 01-18-90 195 195 0 00141 72 67 67 0 01116-62 117 117 0 0043-17 65 65 0 01-31 38 117 117 0 0039-11 65 65 0 01-32 35z"/></svg></a><a href=https://github.com/mikehadlow target=_blank rel="noopener noreferrer" class=navbar-item><svg height="24" viewBox="0 0 16 16" width="24" aria-hidden="true"><path style="fill:#fff" fill-rule="evenodd" d="M8 0C3.58.0.0 3.58.0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38.0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95.0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12.0.0.67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15.0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48.0 1.07-.01 1.93-.01 2.2.0.21.15.46.55.38A8.013 8.013.0 0016 8c0-4.42-3.58-8-8-8z"/></svg></a></div></div></div></nav><section class=section><div class=container><div class=columns><div class="column is-two-thirds"><h1 class=title>Blocking XREAD From A Redis Stream Using StackExchange.Redis</h1><p class=subtitle>By Mike Hadlow, published Feb 18, 2022</p><div><article id=content class=content><p>The <a href=https://github.com/StackExchange/StackExchange.Redis>StackExchange.Redis</a> NuGet package is the most popular .NET client for <a href=https://redis.io/>Redis</a>. It&rsquo;s stable, high-performance, with a great community and wide usage. One of it&rsquo;s most interesting features is the way it does network <a href=https://stackexchange.github.io/StackExchange.Redis/PipelinesMultiplexers.html#multiplexing>multiplexing</a>. This allows multi-threaded applications to use a single TCP/IP connection without blocking. Unfortunately this also means that the library does not support blocking operations such as <code>XREAD BLOCK</code>, which is important if you want to leverage <a href=https://redis.io/topics/streams-intro>Redis Streams</a> on .NET. This post offers a work-around for this.</p><p>From the StackExchange.Redis <a href=https://stackexchange.github.io/StackExchange.Redis/PipelinesMultiplexers.html#multiplexing>Multiplexing documentation</a></p><blockquote><p>&mldr; For this reason, the only redis features that StackExchange.Redis does not offer (and <em>will not ever offer</em>) are the “blocking pops” (<a href=https://redis.io/commands/blpop>BLPOP</a>, <a href=https://redis.io/commands/brpop>BRPOP</a> and <a href=https://redis.io/commands/brpoplpush>BRPOPLPUSH</a>) - because this would allow a single caller to stall the entire multiplexer, blocking all other callers.</p></blockquote><p>Redis Streams have been available since Redis version 5.0. They implement an append only log. One of the key features is the ability for clients to listen for new stream entries in a way analogous to a queue subscriber in a messaging system. This is implemented with the <a href=https://redis.io/commands/xread><code>XREAD BLOCK</code></a> command. The <code>XREAD</code> command can also be used without <code>BLOCK</code>, so an alternative is to simply poll the server, but this introduces a polling interval latency that&rsquo;s unacceptable with high throughput systems.</p><p>The lack of <code>XREAD</code> provision for StackExchange.Redis has lead to much discussion on Stack Overflow and GitHub; see <a href=https://stackoverflow.com/questions/58762692/how-to-do-a-blocking-read-from-c-sharp-stackexchange-redis-nuget-package-on-redi>here</a> and <a href=https://github.com/StackExchange/StackExchange.Redis/issues/1158#issuecomment-499389882>here</a> for example. There has been a <a href=https://github.com/StackExchange/StackExchange.Redis/issues/886>task to rewrite the internals to support blocking operations</a> since 2018, but it is still open. I expect that until Stack Overflow themselves find a need for blocking operations we&rsquo;re unlikely to see it, especially now that the author, the hugely prolific, <a href=https://twitter.com/marcgravell>Marc Gravell</a> (who someone really should pay just to work on open source) has moved onto Microsoft.</p><p>My colleague Marc Stedman has been experimenting with the low level StackExchange.Redis <code>ExecuteAync</code> method to issue the raw <code>XREAD BLOCK</code> command to the server. Of course because of the multiplexer this will block all other operations, so it&rsquo;s important to run it on a dedicated connection. Marc Gravell also says this on <a href=https://github.com/StackExchange/StackExchange.Redis/issues/1117#issuecomment-481844315>this thread</a>:</p><blockquote><p>If you use the raw commands API to execute blocking operations, you should expect bad things to happen. For example, from the connection&rsquo;s perspective, it won&rsquo;t be responding to periodic heartbeat health checks, so it will sever the connection every so often.</p></blockquote><p>However, if we keep the blocking period short, say 500ms, then there&rsquo;s less chance of timeouts. There&rsquo;s obviously a trade off between a shorter interval pummeling the server with read requests, especially if you have lots of clients. In our experiments we&rsquo;ve not seen any issues so far.</p><p>The other (minor) disadvantage of using the raw <code>ExecuteAsync</code> command is that the stream entries are returned as a nested <code>RedisResult</code> tree, but it&rsquo;s straightforward to decode using the <code>XREAD</code> documentation.</p><p>Below is an example implementation that you can modify for your own use:</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-C# data-lang=C#><span style=display:flex><span><span style=color:#66d9ef>using</span> StackExchange.Redis;
+</span></span><span style=display:flex><span><span style=color:#66d9ef>using</span> static System.Console;
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>public</span> <span style=color:#66d9ef>static</span> <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>BlockingReader</span>
+</span></span><span style=display:flex><span>{
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>public</span> <span style=color:#66d9ef>static</span> <span style=color:#66d9ef>async</span> Task Listen(
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>string</span> connection, 
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>string</span> streamName, 
+</span></span><span style=display:flex><span>        CancellationToken cancellation,
+</span></span><span style=display:flex><span>        Action&lt;Entry&gt; handler)
+</span></span><span style=display:flex><span>    {
+</span></span><span style=display:flex><span>        <span style=color:#75715e>// The blocking reader&#39;s connection should not be shared with any other operation.</span>
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>var</span> redis = ConnectionMultiplexer.Connect(connection);
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>if</span>(redis <span style=color:#66d9ef>is</span> <span style=color:#66d9ef>null</span>)
+</span></span><span style=display:flex><span>        {
+</span></span><span style=display:flex><span>            WriteLine(<span style=color:#e6db74>$&#34;Connection to {connection} failed&#34;</span>);
+</span></span><span style=display:flex><span>            <span style=color:#66d9ef>return</span>;
+</span></span><span style=display:flex><span>        }
+</span></span><span style=display:flex><span>        WriteLine(<span style=color:#e6db74>$&#34;Started consuming from stream {streamName}&#34;</span>);
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>try</span>
+</span></span><span style=display:flex><span>        {
+</span></span><span style=display:flex><span>            <span style=color:#66d9ef>var</span> db = redis.GetDatabase();
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>            <span style=color:#66d9ef>var</span> currentId = <span style=color:#e6db74>&#34;$&#34;</span>; <span style=color:#75715e>// listen for new messages</span>
+</span></span><span style=display:flex><span>            <span style=color:#66d9ef>while</span>(!cancellation.IsCancellationRequested)
+</span></span><span style=display:flex><span>            {
+</span></span><span style=display:flex><span>                <span style=color:#66d9ef>var</span> arguments = <span style=color:#66d9ef>new</span> List&lt;<span style=color:#66d9ef>object</span>&gt;
+</span></span><span style=display:flex><span>                {
+</span></span><span style=display:flex><span>                    <span style=color:#e6db74>&#34;BLOCK&#34;</span>,
+</span></span><span style=display:flex><span>                    <span style=color:#e6db74>&#34;500&#34;</span>,
+</span></span><span style=display:flex><span>                    <span style=color:#e6db74>&#34;STREAMS&#34;</span>,
+</span></span><span style=display:flex><span>                    streamName,
+</span></span><span style=display:flex><span>                    currentId
+</span></span><span style=display:flex><span>                };
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>                <span style=color:#75715e>// ExecuteAsync does not take a CancellationToken, so we have to wait the block time</span>
+</span></span><span style=display:flex><span>                <span style=color:#75715e>// before resonding to a cancellation request.</span>
+</span></span><span style=display:flex><span>                <span style=color:#66d9ef>var</span> result = <span style=color:#66d9ef>await</span> db.ExecuteAsync(<span style=color:#e6db74>&#34;XREAD&#34;</span>, arguments).ConfigureAwait(<span style=color:#66d9ef>false</span>);
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>                <span style=color:#66d9ef>if</span>(!result.IsNull)
+</span></span><span style=display:flex><span>                {
+</span></span><span style=display:flex><span>                    <span style=color:#75715e>// should only be a single result if querying a single stream</span>
+</span></span><span style=display:flex><span>                    <span style=color:#66d9ef>foreach</span> (RedisResult[] subresults <span style=color:#66d9ef>in</span> (RedisResult[])result)
+</span></span><span style=display:flex><span>                    {
+</span></span><span style=display:flex><span>                        <span style=color:#66d9ef>var</span> name = (RedisValue)subresults[<span style=color:#ae81ff>0</span>];
+</span></span><span style=display:flex><span>                        <span style=color:#66d9ef>foreach</span>(RedisResult[] messages <span style=color:#66d9ef>in</span> (RedisResult[])subresults[<span style=color:#ae81ff>1</span>])
+</span></span><span style=display:flex><span>                        {
+</span></span><span style=display:flex><span>                            <span style=color:#66d9ef>var</span> id = (RedisValue)messages[<span style=color:#ae81ff>0</span>];
+</span></span><span style=display:flex><span>                            currentId = id;
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>                            <span style=color:#66d9ef>var</span> nameValuePairs = (RedisResult[])messages[<span style=color:#ae81ff>1</span>];
+</span></span><span style=display:flex><span>                            <span style=color:#66d9ef>var</span> pairs = <span style=color:#66d9ef>new</span> Pair[nameValuePairs.Length/<span style=color:#ae81ff>2</span>];
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>                            <span style=color:#66d9ef>for</span>(<span style=color:#66d9ef>var</span> i = <span style=color:#ae81ff>0</span>; i &lt; nameValuePairs.Length; i+=<span style=color:#ae81ff>2</span>)
+</span></span><span style=display:flex><span>                            {
+</span></span><span style=display:flex><span>                                pairs[i / <span style=color:#ae81ff>2</span>] = <span style=color:#66d9ef>new</span> Pair((RedisValue)nameValuePairs[i], (RedisValue)nameValuePairs[i + <span style=color:#ae81ff>1</span>]);
+</span></span><span style=display:flex><span>                            }
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>                            <span style=color:#66d9ef>var</span> entry = <span style=color:#66d9ef>new</span> Entry(name, id, pairs);
+</span></span><span style=display:flex><span>                            handler(entry);
+</span></span><span style=display:flex><span>                        }
+</span></span><span style=display:flex><span>                    }
+</span></span><span style=display:flex><span>                }
+</span></span><span style=display:flex><span>            }
+</span></span><span style=display:flex><span>        }
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>catch</span> (TaskCanceledException) { }
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>catch</span> (Exception ex)
+</span></span><span style=display:flex><span>        {
+</span></span><span style=display:flex><span>            WriteLine(ex.ToString());
+</span></span><span style=display:flex><span>        }
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>finally</span>
+</span></span><span style=display:flex><span>        {
+</span></span><span style=display:flex><span>            WriteLine(<span style=color:#e6db74>$&#34;Stopped consuming from stream {streamName}&#34;</span>);
+</span></span><span style=display:flex><span>        }
+</span></span><span style=display:flex><span>    }
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>public</span> <span style=color:#66d9ef>record</span> <span style=color:#a6e22e>Entry</span>(RedisValue StreamName, RedisValue Id, Pair[] Values);
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>public</span> <span style=color:#66d9ef>record</span> <span style=color:#a6e22e>Pair</span>(RedisValue Name, RedisValue Value);
+</span></span></code></pre></div><p>You can use this method like this:</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-C# data-lang=C#><span style=display:flex><span><span style=color:#66d9ef>var</span> readerTask = BlockingReader.Listen(
+</span></span><span style=display:flex><span>    <span style=color:#e6db74>&#34;localhost&#34;</span>, 
+</span></span><span style=display:flex><span>    <span style=color:#e6db74>&#34;my-stream&#34;</span>, 
+</span></span><span style=display:flex><span>    cts.Token,
+</span></span><span style=display:flex><span>    entry =&gt; 
+</span></span><span style=display:flex><span>    {
+</span></span><span style=display:flex><span>        WriteLine(<span style=color:#e6db74>$&#34;\tId: {entry.Id}&#34;</span>);
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>foreach</span>(<span style=color:#66d9ef>var</span> pair <span style=color:#66d9ef>in</span> entry.Values)
+</span></span><span style=display:flex><span>        {
+</span></span><span style=display:flex><span>            WriteLine(<span style=color:#e6db74>$&#34;\t\t{pair.Name}: {pair.Value}&#34;</span>);
+</span></span><span style=display:flex><span>        }
+</span></span><span style=display:flex><span>    });
+</span></span></code></pre></div><p>I&rsquo;ve also shared a worked example on GitHub, <a href=https://github.com/mikehadlow/RedisStreamReader>RedisStreamReader</a>, of a simple console application that publishes to a stream and uses the method above to listen for new messages.</p><p>Discuss on <a href=https://www.reddit.com/r/programming/comments/svn2m0/blocking_xread_from_a_redis_stream_using/>Reddit</a></p></article></div></div><div class="column is-one-third box"><div class=content><p><strong>Hi, I&rsquo;m Mike Hadlow. Software developer, architect, blogger and open source developer.</strong></p><p>Find my old blog at <a href=http://mikehadlow.blogspot.com/>Code Rant</a>. This ran from 2005 to 2020 and has hundreds of posts.</p><p><em>All code on this blog is published under an <a href=https://opensource.org/licenses/MIT>MIT licence</a>. You are free to copy it and use it for any purpose without attribution. There is no warranty whatsoever.</em></p><p><strong>There are no cookies on this site</strong></p><p>The GitHub repository for this site is <a href=https://github.com/mikehadlow/mikehadlow.github.io>here</a>.</p></div></div></div></div></section></body><script>document.addEventListener("DOMContentLoaded",()=>{const e=Array.prototype.slice.call(document.querySelectorAll(".navbar-burger"),0);e.length>0&&e.forEach(e=>{e.addEventListener("click",()=>{const t=e.dataset.target,n=document.getElementById(t);e.classList.toggle("is-active"),n.classList.toggle("is-active")})})})</script></html>

@@ -1,0 +1,160 @@
+<!doctype html><html><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta name=description content="Mike Hadlow C# .NET technical blog."><meta name=author content="Mike Hadlow"><meta property="og:url" content="https://mikehadlow.com/posts/use-google-protobuf-without-code-generation/"><meta property="og:type" content="article"><meta property="og:title" content="How to use Google.Protobuf without code generation in C#"><meta property="og:description" content="The Google.Protobuf NuGet package is the recommended protobuf serializer for .NET. The documented way of using it is to code gen both C# models and serializers from .proto files using the protoc tool. However, sometimes it&rsquo;s more convenient to do serialization/deserialization on an ad-hoc basis without code generation. The Google.Protobuf NuGet package provides APIs to do this, but they are poorly documented. This post gives a code example for a simple &ldquo;no-code-gen&rdquo; serializer."><meta property="og:image" content="https://mikehadlow.com/img/blog-image.png"><title>Mike Hadlow</title><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/bulma@0.9.1/css/bulma.min.css></head><body><nav class="navbar is-dark" role=navigation aria-label="main navigation"><div class=container><div class=navbar-brand><a href=/ class=navbar-item><strong>Mike Hadlow</strong></a>
+<a role=button class=navbar-burger aria-label=menu aria-expanded=false data-target=menu><span aria-hidden=true></span>
+<span aria-hidden=true></span>
+<span aria-hidden=true></span></a></div><div id=menu class=navbar-menu><div class=navbar-start><a href=https://mikehadlow.com/top/about/ class=navbar-item>About</a>
+<a href=https://mikehadlow.com/top/contact/ class=navbar-item>Contact</a>
+<a href=https://twitter.com/mikehadlow target=_blank rel="noopener noreferrer" class=navbar-item><svg height="24" viewBox="328 355 335 276" width="24" aria-hidden="true"><path style="fill:#3ba9ee" d="M630 425A195 195 0 01331 6e2a142 142 0 0097-30 70 70 0 01-58-47 70 70 0 0031-2 70 70 0 01-57-66 70 70 0 0028 5 70 70 0 01-18-90 195 195 0 00141 72 67 67 0 01116-62 117 117 0 0043-17 65 65 0 01-31 38 117 117 0 0039-11 65 65 0 01-32 35z"/></svg></a><a href=https://github.com/mikehadlow target=_blank rel="noopener noreferrer" class=navbar-item><svg height="24" viewBox="0 0 16 16" width="24" aria-hidden="true"><path style="fill:#fff" fill-rule="evenodd" d="M8 0C3.58.0.0 3.58.0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38.0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95.0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12.0.0.67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15.0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48.0 1.07-.01 1.93-.01 2.2.0.21.15.46.55.38A8.013 8.013.0 0016 8c0-4.42-3.58-8-8-8z"/></svg></a></div></div></div></nav><section class=section><div class=container><div class=columns><div class="column is-two-thirds"><h1 class=title>How to use Google.Protobuf without code generation in C#</h1><p class=subtitle>By Mike Hadlow, published Mar 18, 2022</p><div><article id=content class=content><p>The <a href=https://www.nuget.org/packages/Google.Protobuf/><code>Google.Protobuf</code></a> NuGet package is the recommended <a href=https://developers.google.com/protocol-buffers>protobuf</a> serializer for .NET. The documented way of using it is to code gen both C# models and serializers from <code>.proto</code> files using the <code>protoc</code> tool. However, sometimes it&rsquo;s more convenient to do serialization/deserialization on an ad-hoc basis without code generation. The <code>Google.Protobuf</code> NuGet package provides APIs to do this, but they are poorly documented. This post gives a code example for a simple &ldquo;no-code-gen&rdquo; serializer.</p><p>Protocol Buffers, to give protobuf its full name, is a simple efficient binary format for serializing messages. The structure is relatively simple and described in this single page, <a href=https://developers.google.com/protocol-buffers/docs/encoding>Encoding</a>, in the protobuf documentation.</p><p>The message structures are defined in <code>.proto</code> files. Here&rsquo;s a very simple example:</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-protobuf data-lang=protobuf><span style=display:flex><span>syntax <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;proto3&#34;</span>;<span style=color:#960050;background-color:#1e0010>
+</span></span></span><span style=display:flex><span><span style=color:#960050;background-color:#1e0010>
+</span></span></span><span style=display:flex><span><span style=color:#960050;background-color:#1e0010></span><span style=color:#66d9ef>message</span> <span style=color:#a6e22e>Example</span> {<span style=color:#960050;background-color:#1e0010>
+</span></span></span><span style=display:flex><span><span style=color:#960050;background-color:#1e0010></span>  <span style=color:#66d9ef>string</span> name <span style=color:#f92672>=</span> <span style=color:#ae81ff>1</span>;<span style=color:#960050;background-color:#1e0010>
+</span></span></span><span style=display:flex><span><span style=color:#960050;background-color:#1e0010></span>  <span style=color:#66d9ef>int32</span> age <span style=color:#f92672>=</span> <span style=color:#ae81ff>3</span>;<span style=color:#960050;background-color:#1e0010>
+</span></span></span><span style=display:flex><span><span style=color:#960050;background-color:#1e0010></span>  <span style=color:#66d9ef>int64</span> stars_in_galaxy <span style=color:#f92672>=</span> <span style=color:#ae81ff>5</span>;<span style=color:#960050;background-color:#1e0010>
+</span></span></span><span style=display:flex><span><span style=color:#960050;background-color:#1e0010></span>}<span style=color:#960050;background-color:#1e0010>
+</span></span></span></code></pre></div><p>As you can see, each property/field of a message has three parts, a type (<code>string</code>), a name (<code>name</code>), and a tag number, (<code>1</code>). This is serialized to a byte array as a series of tag and value pairs (much simplified):</p><table><thead><tr><th>tag</th><th>value</th><th>tag</th><th>value</th><th>tag</th><th>value</th></tr></thead><tbody><tr><td>1 : delimited</td><td>&ldquo;value&rdquo;</td><td>3 : varint</td><td>456</td><td>5 : varint</td><td>345567</td></tr></tbody></table><p>The interesting thing to note is that there is no message identifier and the property/field names are not present in the serialized value. In fact they are only used by the code generator tool, <code>protoc</code>, for generating the model DTOs in the specified language. The serializer doesn&rsquo;t need to know about them. In order to serialize or deserialize a message the serializer just needs to know the tag number, type, and value of each field.</p><p>The <code>Google.Protobuf</code> NuGet package provides two useful types, <code>CodedInputStream</code> and <code>CodedOutputStream</code> which makes reading and writing protobuf messages pretty simple. I&rsquo;ve created a simple demonstration serializer using these two classes that can serialize and deserialize simple messages. Here&rsquo;s an example of it in use:</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-csharp data-lang=csharp><span style=display:flex><span><span style=color:#75715e>// Given Example.proto, create a new Serializer instance</span>
+</span></span><span style=display:flex><span><span style=color:#75715e>// passing in a dictionary listing the field tags and types.</span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>var</span> serializer = <span style=color:#66d9ef>new</span> Serializer(<span style=color:#66d9ef>new</span> Dictionary&lt;<span style=color:#66d9ef>uint</span>, Type&gt; 
+</span></span><span style=display:flex><span>{ 
+</span></span><span style=display:flex><span><span style=color:#a6e22e>    [1]</span> = <span style=color:#66d9ef>typeof</span>(<span style=color:#66d9ef>string</span>),
+</span></span><span style=display:flex><span><span style=color:#a6e22e>    [3]</span> = <span style=color:#66d9ef>typeof</span>(<span style=color:#66d9ef>int</span>),
+</span></span><span style=display:flex><span><span style=color:#a6e22e>    [5]</span> = <span style=color:#66d9ef>typeof</span>(<span style=color:#66d9ef>long</span>),
+</span></span><span style=display:flex><span>});
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e>// Create a new ad-hoc message, specifying tags and values.</span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>var</span> example = <span style=color:#66d9ef>new</span> Dictionary&lt;<span style=color:#66d9ef>uint</span>, <span style=color:#66d9ef>object</span>&gt;
+</span></span><span style=display:flex><span>{
+</span></span><span style=display:flex><span><span style=color:#a6e22e>    [1]</span> = <span style=color:#e6db74>&#34;Superman&#34;</span>,
+</span></span><span style=display:flex><span><span style=color:#a6e22e>    [3]</span> = <span style=color:#ae81ff>570</span>,
+</span></span><span style=display:flex><span><span style=color:#a6e22e>    [5]</span> = <span style=color:#66d9ef>long</span>.MaxValue
+</span></span><span style=display:flex><span>};
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e>// use the no-code-gen serializer to serialize the message to protobuf.</span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>var</span> protobufBytes = serializer.Serialize(example);
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e>// use the no-code-gen serializer to deserialize the protobuf message.</span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>var</span> result = serializer.Deserialize(protobufBytes);
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>WriteLine(<span style=color:#e6db74>$&#34;result.Count = {result.Count}&#34;</span>);
+</span></span><span style=display:flex><span>WriteLine(<span style=color:#e6db74>$&#34;result[1] = {result[1]}&#34;</span>);
+</span></span><span style=display:flex><span>WriteLine(<span style=color:#e6db74>$&#34;result[3] = {result[3]}&#34;</span>);
+</span></span><span style=display:flex><span>WriteLine(<span style=color:#e6db74>$&#34;result[5] = {result[5]}&#34;</span>);
+</span></span></code></pre></div><p>Notice that the <code>Serializer</code> is constructed with a simple dictionary of tag numbers and types. This tells the serializer the structure of the expected message. The message for serialization is another simple dictionary, this time of tag numbers and values. In the example above we serialize a message to a byte array then deserialize it. The deserialized value is another tag and value dictionary.</p><p><strong>Important Health Warning!</strong> This demo serializer is &ldquo;the simplest thing that could work&rdquo; for this simple example. It is <em>not</em> a fully featured protobuf serializer and has the following limitations:</p><ol><li>Tags can only have the maximum value of 31 (because it only supports single byte tags)</li><li>Only int, long, and string are supported.</li><li>No arrays or sub-types are supported.</li><li>It is not optimized in any way and does a <em>lot</em> of boxing and unboxing of message values.</li></ol><p>With that said, here is the full code listing for the <code>Serializer</code> class. The full demo is also on <a href=https://github.com/mikehadlow/ProtobufSerializer>GitHub here</a>.</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-csharp data-lang=csharp><span style=display:flex><span><span style=color:#66d9ef>using</span> Google.Protobuf;
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>namespace</span> ProtobufSerializer;
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e>/// &lt;summary&gt;</span>
+</span></span><span style=display:flex><span><span style=color:#75715e>/// Very simple no-code-gen protobuf serializer.</span>
+</span></span><span style=display:flex><span><span style=color:#75715e>/// </span>
+</span></span><span style=display:flex><span><span style=color:#75715e>/// Has many limitations!</span>
+</span></span><span style=display:flex><span><span style=color:#75715e>/// 1. Tags must be maximum 31 (because we only support single byte tags).</span>
+</span></span><span style=display:flex><span><span style=color:#75715e>/// 2. Only int, long, and string currently supported.</span>
+</span></span><span style=display:flex><span><span style=color:#75715e>/// 3. No arrays or sub types supported.</span>
+</span></span><span style=display:flex><span><span style=color:#75715e>/// &lt;/summary&gt;</span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>public</span> <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>Serializer</span>
+</span></span><span style=display:flex><span>{
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>private</span> <span style=color:#66d9ef>readonly</span> IDictionary&lt;<span style=color:#66d9ef>uint</span>, Type&gt; messageDefinition;
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>private</span> <span style=color:#66d9ef>readonly</span> HashSet&lt;<span style=color:#66d9ef>uint</span>&gt; fieldSet;
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>public</span> Serializer(IDictionary&lt;<span style=color:#66d9ef>uint</span>, Type&gt; messageDefinition)
+</span></span><span style=display:flex><span>    {
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>this</span>.messageDefinition = messageDefinition;
+</span></span><span style=display:flex><span>        fieldSet = <span style=color:#66d9ef>new</span> HashSet&lt;<span style=color:#66d9ef>uint</span>&gt;(messageDefinition.Keys);
+</span></span><span style=display:flex><span>    }
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>public</span> <span style=color:#66d9ef>byte</span>[] Serialize(IDictionary&lt;<span style=color:#66d9ef>uint</span>, <span style=color:#66d9ef>object</span>&gt; <span style=color:#66d9ef>value</span>)
+</span></span><span style=display:flex><span>    {
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>var</span> valueFieldSet = <span style=color:#66d9ef>new</span> HashSet&lt;<span style=color:#66d9ef>uint</span>&gt;(<span style=color:#66d9ef>value</span>.Keys);
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>if</span>(fieldSet.Except(valueFieldSet).Any())
+</span></span><span style=display:flex><span>        {
+</span></span><span style=display:flex><span>            <span style=color:#66d9ef>throw</span> <span style=color:#66d9ef>new</span> ArgumentException(<span style=color:#e6db74>&#34;Input value key set differs from messageDefinition.&#34;</span>);
+</span></span><span style=display:flex><span>        }
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>var</span> bytes = <span style=color:#66d9ef>new</span> <span style=color:#66d9ef>byte</span>[CalculateMessageSize(<span style=color:#66d9ef>value</span>)];
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>var</span> output = <span style=color:#66d9ef>new</span> CodedOutputStream(bytes);
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>foreach</span>(<span style=color:#66d9ef>var</span> (key, input) <span style=color:#66d9ef>in</span> <span style=color:#66d9ef>value</span>)
+</span></span><span style=display:flex><span>        {
+</span></span><span style=display:flex><span>            output.WriteRawTag(CreateTag(key));
+</span></span><span style=display:flex><span>            <span style=color:#66d9ef>switch</span> (messageDefinition[key])
+</span></span><span style=display:flex><span>            {
+</span></span><span style=display:flex><span>                <span style=color:#66d9ef>case</span> Type t when t == <span style=color:#66d9ef>typeof</span>(<span style=color:#66d9ef>int</span>):
+</span></span><span style=display:flex><span>                    output.WriteInt32((<span style=color:#66d9ef>int</span>)(input ?? <span style=color:#ae81ff>0</span>));
+</span></span><span style=display:flex><span>                    <span style=color:#66d9ef>break</span>;
+</span></span><span style=display:flex><span>                <span style=color:#66d9ef>case</span> Type t when t == <span style=color:#66d9ef>typeof</span>(<span style=color:#66d9ef>long</span>):
+</span></span><span style=display:flex><span>                    output.WriteInt64((<span style=color:#66d9ef>long</span>)(input ?? <span style=color:#ae81ff>0</span>));
+</span></span><span style=display:flex><span>                    <span style=color:#66d9ef>break</span>;
+</span></span><span style=display:flex><span>                <span style=color:#66d9ef>case</span> Type t when t == <span style=color:#66d9ef>typeof</span>(<span style=color:#66d9ef>string</span>):
+</span></span><span style=display:flex><span>                    output.WriteString((<span style=color:#66d9ef>string</span>)(input ?? <span style=color:#e6db74>&#34;&#34;</span>));
+</span></span><span style=display:flex><span>                    <span style=color:#66d9ef>break</span>;
+</span></span><span style=display:flex><span>                <span style=color:#66d9ef>default</span>:
+</span></span><span style=display:flex><span>                    <span style=color:#66d9ef>throw</span> <span style=color:#66d9ef>new</span> InvalidOperationException(<span style=color:#e6db74>$&#34;Invalid type.&#34;</span>);
+</span></span><span style=display:flex><span>            }
+</span></span><span style=display:flex><span>        }
+</span></span><span style=display:flex><span>        output.CheckNoSpaceLeft();
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>return</span> bytes;
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>int</span> CalculateMessageSize(IDictionary&lt;<span style=color:#66d9ef>uint</span>, <span style=color:#66d9ef>object</span>&gt; <span style=color:#66d9ef>value</span>)
+</span></span><span style=display:flex><span>        {
+</span></span><span style=display:flex><span>            <span style=color:#66d9ef>var</span> size = <span style=color:#ae81ff>0</span>;
+</span></span><span style=display:flex><span>            <span style=color:#66d9ef>foreach</span>(<span style=color:#66d9ef>var</span> (key, input) <span style=color:#66d9ef>in</span> <span style=color:#66d9ef>value</span>)
+</span></span><span style=display:flex><span>            {
+</span></span><span style=display:flex><span>                size += <span style=color:#ae81ff>1</span> + messageDefinition[key] <span style=color:#66d9ef>switch</span>
+</span></span><span style=display:flex><span>                {
+</span></span><span style=display:flex><span>                    Type t when t == <span style=color:#66d9ef>typeof</span>(<span style=color:#66d9ef>int</span>) =&gt;  CodedOutputStream.ComputeInt32Size((<span style=color:#66d9ef>int</span>)(input ?? <span style=color:#ae81ff>0</span>)),
+</span></span><span style=display:flex><span>                    Type t when t == <span style=color:#66d9ef>typeof</span>(<span style=color:#66d9ef>long</span>) =&gt;  CodedOutputStream.ComputeInt64Size((<span style=color:#66d9ef>long</span>)(input ?? <span style=color:#ae81ff>0</span>)),
+</span></span><span style=display:flex><span>                    Type t when t == <span style=color:#66d9ef>typeof</span>(<span style=color:#66d9ef>string</span>) =&gt;  CodedOutputStream.ComputeStringSize((<span style=color:#66d9ef>string</span>)(input ?? <span style=color:#e6db74>&#34;&#34;</span>)),
+</span></span><span style=display:flex><span>                    Type t =&gt; <span style=color:#66d9ef>throw</span> <span style=color:#66d9ef>new</span> InvalidOperationException(<span style=color:#e6db74>$&#34;Unsupported type {t.Name}&#34;</span>)
+</span></span><span style=display:flex><span>                };
+</span></span><span style=display:flex><span>            }
+</span></span><span style=display:flex><span>            <span style=color:#66d9ef>return</span> size;
+</span></span><span style=display:flex><span>        }
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>        <span style=color:#75715e>// tag byte format is AAAAA_BBB where A bits are the tag number and B bits are the wire type.</span>
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>byte</span> CreateTag(<span style=color:#66d9ef>uint</span> key)
+</span></span><span style=display:flex><span>        {
+</span></span><span style=display:flex><span>            <span style=color:#66d9ef>uint</span> wiretype = messageDefinition[key] <span style=color:#66d9ef>switch</span> 
+</span></span><span style=display:flex><span>            { 
+</span></span><span style=display:flex><span>                Type t when t == <span style=color:#66d9ef>typeof</span>(<span style=color:#66d9ef>int</span>) =&gt; <span style=color:#ae81ff>0</span>,
+</span></span><span style=display:flex><span>                Type t when t == <span style=color:#66d9ef>typeof</span>(<span style=color:#66d9ef>long</span>) =&gt; <span style=color:#ae81ff>0</span>,
+</span></span><span style=display:flex><span>                Type t when t == <span style=color:#66d9ef>typeof</span>(<span style=color:#66d9ef>string</span>) =&gt; <span style=color:#ae81ff>2</span>, <span style=color:#75715e>// delimited</span>
+</span></span><span style=display:flex><span>                Type t =&gt; <span style=color:#66d9ef>throw</span> <span style=color:#66d9ef>new</span> InvalidOperationException(<span style=color:#e6db74>$&#34;Unsupported type {t.Name}&#34;</span>)
+</span></span><span style=display:flex><span>            };
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>            <span style=color:#66d9ef>return</span> BitConverter.GetBytes((key &lt;&lt; <span style=color:#ae81ff>3</span>) + wiretype)[<span style=color:#ae81ff>0</span>];
+</span></span><span style=display:flex><span>        }
+</span></span><span style=display:flex><span>    }
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>public</span> IDictionary&lt;<span style=color:#66d9ef>uint</span>, <span style=color:#66d9ef>object</span>&gt; Deserialize(<span style=color:#66d9ef>byte</span>[] bytes)
+</span></span><span style=display:flex><span>    {
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>using</span> var input = <span style=color:#66d9ef>new</span> CodedInputStream(bytes);
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>var</span> <span style=color:#66d9ef>value</span> = <span style=color:#66d9ef>new</span> Dictionary&lt;<span style=color:#66d9ef>uint</span>, <span style=color:#66d9ef>object</span>&gt;();
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>uint</span> tag;
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>while</span>((tag = input.ReadTag()) != <span style=color:#ae81ff>0</span>)
+</span></span><span style=display:flex><span>        {
+</span></span><span style=display:flex><span>            <span style=color:#66d9ef>var</span> field = tag &gt;&gt; <span style=color:#ae81ff>3</span>;
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>            <span style=color:#66d9ef>if</span>(!messageDefinition.ContainsKey(field))
+</span></span><span style=display:flex><span>            {
+</span></span><span style=display:flex><span>                <span style=color:#66d9ef>throw</span> <span style=color:#66d9ef>new</span> InvalidOperationException(<span style=color:#e6db74>$&#34;Unexpected field value: {field}&#34;</span>);
+</span></span><span style=display:flex><span>            }
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>            <span style=color:#66d9ef>switch</span> (messageDefinition[field])
+</span></span><span style=display:flex><span>            {
+</span></span><span style=display:flex><span>                <span style=color:#66d9ef>case</span> Type t when t == <span style=color:#66d9ef>typeof</span>(<span style=color:#66d9ef>int</span>):
+</span></span><span style=display:flex><span>                    <span style=color:#66d9ef>value</span>.Add(field, input.ReadInt32());
+</span></span><span style=display:flex><span>                    <span style=color:#66d9ef>break</span>;
+</span></span><span style=display:flex><span>                <span style=color:#66d9ef>case</span> Type t when t == <span style=color:#66d9ef>typeof</span>(<span style=color:#66d9ef>long</span>):
+</span></span><span style=display:flex><span>                    <span style=color:#66d9ef>value</span>.Add(field, input.ReadInt64());
+</span></span><span style=display:flex><span>                    <span style=color:#66d9ef>break</span>;
+</span></span><span style=display:flex><span>                <span style=color:#66d9ef>case</span> Type t when t == <span style=color:#66d9ef>typeof</span>(<span style=color:#66d9ef>string</span>):
+</span></span><span style=display:flex><span>                    <span style=color:#66d9ef>value</span>.Add(field, input.ReadString());
+</span></span><span style=display:flex><span>                    <span style=color:#66d9ef>break</span>;
+</span></span><span style=display:flex><span>                <span style=color:#66d9ef>default</span>:
+</span></span><span style=display:flex><span>                    <span style=color:#66d9ef>throw</span> <span style=color:#66d9ef>new</span> InvalidOperationException(<span style=color:#e6db74>$&#34;Invalid type.&#34;</span>);
+</span></span><span style=display:flex><span>            }
+</span></span><span style=display:flex><span>        }
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>return</span> <span style=color:#66d9ef>value</span>;
+</span></span><span style=display:flex><span>    }
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div></article></div></div><div class="column is-one-third box"><div class=content><p><strong>Hi, I&rsquo;m Mike Hadlow. Software developer, architect, blogger and open source developer.</strong></p><p>Find my old blog at <a href=http://mikehadlow.blogspot.com/>Code Rant</a>. This ran from 2005 to 2020 and has hundreds of posts.</p><p><em>All code on this blog is published under an <a href=https://opensource.org/licenses/MIT>MIT licence</a>. You are free to copy it and use it for any purpose without attribution. There is no warranty whatsoever.</em></p><p><strong>There are no cookies on this site</strong></p><p>The GitHub repository for this site is <a href=https://github.com/mikehadlow/mikehadlow.github.io>here</a>.</p></div></div></div></div></section></body><script>document.addEventListener("DOMContentLoaded",()=>{const e=Array.prototype.slice.call(document.querySelectorAll(".navbar-burger"),0);e.length>0&&e.forEach(e=>{e.addEventListener("click",()=>{const t=e.dataset.target,n=document.getElementById(t);e.classList.toggle("is-active"),n.classList.toggle("is-active")})})})</script></html>
