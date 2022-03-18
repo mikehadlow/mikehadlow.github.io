@@ -187,5 +187,5 @@ public class Serializer
         return value;
     }
 }
-
 ```
+Discuss this post on [Reddit](https://www.reddit.com/r/programming/comments/th77x0/how_to_use_googleprotobuf_without_code_generation/)
