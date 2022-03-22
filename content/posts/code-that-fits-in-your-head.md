@@ -4,7 +4,9 @@ date: 2022-03-22
 draft: false
 author: Mike Hadlow
 ---
-This is my review of [Mark Seemann's](https://blog.ploeh.dk/) new book, [Code That Fits In Your Head - Heuristics for Software Engineering](https://www.amazon.co.uk/Code-That-Fits-Your-Head/dp/0137464401) . Mark is a leading figure in the world of .NET software development. He wrote _the_ book on dependency injection and more recently he's been an advocate of F# and functional programming. His blog is essential reading for anyone interested in the art of programming.
+This is my review of [Mark Seemann's](https://blog.ploeh.dk/) new book, [Code That Fits In Your Head - Heuristics for Software Engineering](https://www.amazon.co.uk/Code-That-Fits-Your-Head/dp/0137464401) . 
+<!--more-->
+Mark is a leading figure in the world of .NET software development. He wrote _the_ book on dependency injection and more recently he's been an advocate of F# and functional programming. His blog is essential reading for anyone interested in the art of programming.
 
 I had the pleasure of working with Mark a few years ago. He was the development lead and architect for a rewrite of a music streaming platform.  It was a wonderful learning experience. Every code review was a lesson in writing better software. The heuristics presented in this book were really used and Mark has a huge reference library of books, articles, and blog posts that were regularly referenced to back up a point he was making. He's put an enormous, deliberate, and sustained effort into improving his practice as a software developer over decades. If you have the opportunity to hire Mark as a consultant I'd very much recommend it, but unfortunately he doesn't scale, so for most this book is the next best thing.
 
