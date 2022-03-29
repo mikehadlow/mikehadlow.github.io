@@ -27,3 +27,5 @@ All the discussion is supported by a sample application that's available on GitH
 If I have any criticism it's that in some ways the book is overly ambitious and tries to cover too many aspects of software engineering in too brief a volume. Some chapters touch very lightly on subjects that could easily be a whole book in their own right. Chapter 13 which covers composition and is one of Mark's main interests really only skims the subject. Indeed, as I mentioned above, Mark has written a whole book on it. So it should be seen as more of a guide to further reading and investigation rather than a definitive textbook. The Bibliography alone is probably worth the price of the book; over 100 books and articles are referenced that cover the full gamut of software engineering.
 
 So very much recommended as a mid-career checklist for anyone building enterprise software.
+
+Discuss this post on [Reddit](https://www.reddit.com/r/programming/comments/tqwpu7/book_review_code_that_fits_in_your_head_by_mark/)
