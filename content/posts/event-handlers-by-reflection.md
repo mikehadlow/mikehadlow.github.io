@@ -1,5 +1,5 @@
 ---
-title: "Add event handlers dynamically using reflection"
+title: "C#: Add event handlers dynamically using reflection"
 date: 2022-04-28
 draft: false
 author: Mike Hadlow
