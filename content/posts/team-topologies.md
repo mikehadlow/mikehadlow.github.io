@@ -4,7 +4,7 @@ date: 2022-04-29
 draft: false
 author: Mike Hadlow
 ---
-This is my book review of [Team Topologies]() by Matthew Skelton and Manuel Pais. 
+This is my book review of [Team Topologies](https://teamtopologies.com/) by Matthew Skelton and Manuel Pais. 
 
 [Conway's Law](https://en.wikipedia.org/wiki/Conway%27s_law), coined by computer scientist Melvin Conway states:
 
