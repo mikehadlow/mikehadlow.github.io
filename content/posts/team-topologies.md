@@ -4,7 +4,9 @@ date: 2022-04-29
 draft: false
 author: Mike Hadlow
 ---
-This is my book review of [Team Topologies]() by Matthew Skelton and Manuel Pais. [Conway's Law](https://en.wikipedia.org/wiki/Conway%27s_law), coined by computer scientist Melvin Conway states:
+This is my book review of [Team Topologies]() by Matthew Skelton and Manuel Pais. 
+
+[Conway's Law](https://en.wikipedia.org/wiki/Conway%27s_law), coined by computer scientist Melvin Conway states:
 
 > Any organization that designs a system (defined broadly) will produce a design whose structure is a copy of the organization's communication structure.
 
@@ -30,7 +32,7 @@ There is much discussion of how to migrate traditional team types to the four-to
 * Infrastructure teams to platform teams.
 * Technical layer (e.g. DBA) teams to stream-aligned or enabling teams.
 * Support teams to stream-aligned teams embedded with developers.
-* Architecture teams better better organized as a part-time guild of stream-aligned team developers.
+* Architecture teams better organized as a part-time guild of stream-aligned team developers.
 
 Any reverse Conway maneuver by definition is a combination of team reorganization and software architecture migration. They devote a chapter to identifying monolithic software and finding seams, or "fracture planes" to break it up. Again they emphasize that the resulting pieces should be "team sized".
 
@@ -40,7 +42,7 @@ As important as the four team topologies themselves is the taxonomy of three dis
 2. Collaboration. Two teams work together for innovation and rapid discovery. Short lived. Highly coupled.
 3. Facilitating. One team trains/mentors another team to adopt a new technology or technique. Short lived. Highly coupled.
 
-Each of the fundamental team types described above: stream-aligned, enabling, complicated-subsystem, and platform, has typical interaction modes in a table:
+Each of the fundamental team types described above: stream-aligned, enabling, complicated-subsystem, and platform, has typical interaction modes described in the following table:
 
 | Team Type | Collaboration | X-as-a-service | Facilitating |
 |---|---|---|---|
@@ -55,4 +57,4 @@ The final chapter discusses various techniques to discover and evolve teams and 
 
 > "The most important thing is not the shape of the organization itself but the decision rules and heuristics used to adapt and change the organization as new challenges arise; that is we need to design the design rules, not just the organization."
 
-In summary I'd very much recommend this book to anyone tasked with organizing a software development organization, and indeed anyone working in software development. It's especially useful in that it presents a framework that anyone can use to both think and communicate about teams. The strategies it presents for moving from more traditional organization structures to a stream aligned style would also be essential reading for anyone attempting this transformation. It's quite a short book, always a good think in my opinion, and an easy read. Definitely worth your time!
+In summary I'd very much recommend this book to anyone tasked with organizing a software development organization, and indeed anyone working in software development. It's especially useful in that it presents a framework that anyone can use to both think and communicate about teams. The strategies it presents for moving from more traditional organization structures to a stream aligned style would also be essential reading for anyone attempting this transformation. It's quite a short book, always a good thing in my opinion, and an easy read. Definitely worth your time!
