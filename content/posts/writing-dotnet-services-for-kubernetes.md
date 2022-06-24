@@ -305,8 +305,8 @@ metadata:
   labels:
     app: greetings-service
   annotations:
-    prometheus.io/port: 5432
-    prometheus.io/scrape: true
+    prometheus.io/port: '5432'
+    prometheus.io/scrape: 'true'
 ...
 ```
 
