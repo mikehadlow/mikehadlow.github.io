@@ -16,6 +16,7 @@ Some general application design guidelines:
 * Build stateless horizontally scalable services. See the [12 factor apps](https://12factor.net/) guidelines.
 * Use Linux containers. .NET is now cross platform and runs well on Linux. Avoid the bloat and inevitable friction of Windows Containers.
 * Consider the container immutable. Do not change the local file system. If you need a file system, use a volume mount.
+* One container per pod. Although the [sidecar pattern](https://learnk8s.io/sidecar-containers-patterns) is a popular one, it's perfectly reasonable to have a complete distributed application without a single sidecar in sight. Like all popular patterns, only use it if you have a real need.
 * Every application is a console application. Processes are managed by Kubernetes. HTTP services should be standalone console based web apps using the Kestrel webserver.
 
 One of the main advantages you'll find writing application services for Kubernetes is that the platform now provides many things that you would previously have had to include in your application. As I'll describe below things such as configuration, logging, metrics, and security all become simpler to implement.
@@ -196,7 +197,21 @@ Configure them in the deployment YAML file like this:
 ```
 
 ### Memory and CPU Limits
-TODO
+It's important to set resource quotas for your container so that Kubernetes can correctly schedule your pod to a node. This means configuring resource limits and requests in your deployment YAML. Unless you've got a particular problem you want to solve, it's easiest and simplest just to set the limits and requests to the same values. If you don't set limits and requests, Kubernetes will gives your pod a _best effort_ quality of service which give no guarantee that it wont be evicted when node resources are short. Setting limits and requests gives you _guaranteed_ QoS. Be conservative with the values you choose. Your pod will be throttled if it exceeds its CPU limits, and restarted if it exceeds its memory limits.
+
+```yaml
+    spec:
+      containers:
+      - name: greetings-service
+        image: greetings-service:0.0.3
+        resources:
+          limits:
+            memory: 200Mi
+            cpu: 100m
+          requests:
+            memory: 200Mi
+            cpu: 100m
+```
 
 ### Configuration
 Configuration here means everything that is different for deploying in different environments (e.g. development, QA, staging, production). A single container image should be deployable to any environment without modification. The easiest way to manage configuration in a Kubernetes deployed app is via environment variables. These also have the advantage of being language and OS-agnostic.
