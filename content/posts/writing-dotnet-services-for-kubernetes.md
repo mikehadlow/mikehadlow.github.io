@@ -6,15 +6,19 @@ author: Mike Hadlow
 ---
 In a traditional .NET distributed application, application services (not to be confused with the Kubernetes 'service' object) would either be written as IIS hosted web applications or Windows Services. When building .NET (micro)services to be deployed in a [Kubernetes](https://kubernetes.io/) cluster pretty much every facet of the service needs to be reconsidered, not only the hosting environment but the way configuration is accessed, how logging and monitoring work, and the options for state management and memory considerations. In this post I'll bring my experience of migrating .NET applications to Kubernetes to enumerate some of the main ways that you'll need to change the way you write them.
 <!--more-->
+First some caveats. I don't intend this post to be an introduction to Kubernetes, or a justification of why you should use Kubernetes. Nor is it a tutorial on how to write distributed applications or .NET application services. It's intended audience is my past self about a year and a half ago. I would have very much appreciated a short guide on the changes I would have to make to redesign my .NET application services to take full advantage of Kubernetes.
+
+I've created a minimal example service [NetOnKubernetes](https://github.com/mikehadlow/NetOnKubernetes) that I've shared on GitHub that implements the recommendations below. Please feel free to use it as a starting point for your own application services.
+
 ### Application Service Design
-First some general application design guidelines:
+Some general application design guidelines:
 
 * Build stateless horizontally scalable services. See the [12 factor apps](https://12factor.net/) guidelines.
 * Use Linux containers. .NET is now cross platform and runs well on Linux. Avoid the bloat and inevitable friction of Windows Containers.
 * Consider the container immutable. Do not change the local file system. If you need a file system, use a volume mount.
 * Every application is a console application. Processes are managed by Kubernetes. HTTP services should be standalone console based web apps using the Kestrel webserver.
 
-One of the main things you'll find writing application services for Kubernetes is that the platform now provides many things that you would previously have had to include in your application. As I'll describe below things such as configuration, logging, metrics, and security all become simpler to implement.
+One of the main advantages you'll find writing application services for Kubernetes is that the platform now provides many things that you would previously have had to include in your application. As I'll describe below things such as configuration, logging, metrics, and security all become simpler to implement.
 
 ### Building your container images
 Kubernetes is primarily a container orchestration framework. Your applications/services need to be built and deployed as Docker containers. Microsoft have published a very good guide to building and running containerized .NET applications, [NET Microservices Architecture for Containerized .NET Applications](https://dotnet.microsoft.com/en-us/download/e-book/microservices-architecture/pdf) that I'd recommend reading, although it doesn't cover Kubernetes the advice on creating container images and microservice architecture is very good.
@@ -190,6 +194,9 @@ Configure them in the deployment YAML file like this:
               path: /preStop
               port: 5432          
 ```
+
+### Memory and CPU Limits
+TODO
 
 ### Configuration
 Configuration here means everything that is different for deploying in different environments (e.g. development, QA, staging, production). A single container image should be deployable to any environment without modification. The easiest way to manage configuration in a Kubernetes deployed app is via environment variables. These also have the advantage of being language and OS-agnostic.
