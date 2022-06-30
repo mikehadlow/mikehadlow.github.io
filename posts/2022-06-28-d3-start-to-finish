@@ -4,3 +4,60 @@ date: 2022-06-28
 draft: true
 author: Mike Hadlow
 ---
+This is my review of Peter Cook's D3 Start to Finish, subtitled "Learn how to make a custom data visualisation using D3.js".
+
+### 1. Introduction
+
+This is a follow up book to Cook's "Fundamentals of HTML, SVG, CSS and JavaScript for Data Visualisation" and assumes that you've worked through that book or already know the basics of these foundational web technologies.
+
+Book teaches:
+
+* D3 selections and joins
+* D3 modules (such as scale functions and transitions)
+* Third party libraries such as Lodash
+* General web development patterns that are useful for data visualisations
+
+The book runs through the process of building an interactive "Energy Explorer" which visualises the mix of energy sources (renewable, fossil fuels, etc) for each country.
+
+### 2. Energy Explorer
+
+Gives a brief technical overview of Energy Explorer including the file layout and a walk through of the steps that will be taken during the build.
+
+### 3. Practical Setting Up
+
+Describes the tools you will need including a code editor and a local web server. Describes how to download the code and run it for the first time.
+
+### 4. Introduction to D3
+
+Introduces D3. D3 is a toolkit for building visualisations rather than an "out of the box" chart library. It consists of two main sets of functionality:
+
+* A mechanism for joining (or binding) arrays of data to HTML or SVG elements
+* A vast number of modules that help build data visualisations
+
+Describes data joining and some of the most important modules:
+
+* Fetch module: for loading data from external sources.
+* Scale functions: for scaling data.
+* Axes: for drawing graph axes.
+* Shapes: for drawing shapes such as circles, segments, etc.
+* Transitions: for animating changes to a chart.
+
+### 5. Requesting Data With D3
+
+Describes the D3.csv, D3.tsv, D3.dsv, and D3.json functions for loading data.
+
+NOTE: Peter makes the assumption that the reader doesn't have much prior knowledge. He attempts to describe what an "API" is and "HTTP". So this is quite accessible to beginners.
+
+### 6. Practical: Load The Data
+
+This is the first chapter with actual code. Very clearly written instructions for loading the data. Also very impressed with Peter's trouble shooting tips if your code doesn't work, such as inspecting network traffic using Chrome'e developer tools.
+
+### 7. D3 Selectors
+
+Selectors select HTML or SVG elements on the page using CSS selectors. Shows how to modify the selected elements and demonstrates method chaining for the first time. Shows how to chain selections.
+
+Very useful to have the CodePen examples to play with. Of course this is the great advantage of writing a book about browser based technologies.
+
+### 8. Data Joins
+
+This is really the core of D3, taking an array of data and binding it to a matching array of HTML or SVG elements and then modifying attributes of the elements with values from the data. Very good explanation of how data binding works and some great examples of modifying elements based on the data. Also covers binding arrays of objects and using multi-variable values to modify different aspects of the bound elements.
