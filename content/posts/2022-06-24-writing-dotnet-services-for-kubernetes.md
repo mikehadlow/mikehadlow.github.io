@@ -11,6 +11,7 @@ First some caveats. I don't intend this post to be an introduction to Kubernetes
 I've created a minimal example service [NetOnKubernetes](https://github.com/mikehadlow/NetOnKubernetes) that I've shared on GitHub that implements the recommendations below. Please feel free to use it as a starting point for your own application services.
 
 ### Application Service Design
+
 Some general application design guidelines:
 
 * Build stateless horizontally scalable services. See the [12 factor apps](https://12factor.net/) guidelines.
@@ -22,6 +23,7 @@ Some general application design guidelines:
 One of the main advantages you'll find writing application services for Kubernetes is that the platform now provides many things that you would previously have had to include in your application. As I'll describe below things such as configuration, logging, metrics, and security all become simpler to implement.
 
 ### Building your container images
+
 Kubernetes is primarily a container orchestration framework. Your applications/services need to be built and deployed as Docker containers. Microsoft have published a very good guide to building and running containerized .NET applications, [NET Microservices Architecture for Containerized .NET Applications](https://dotnet.microsoft.com/en-us/download/e-book/microservices-architecture/pdf) that I'd recommend reading, although it doesn't cover Kubernetes the advice on creating container images and microservice architecture is very good.
 
 Although it's possible to compile your application in a traditional build server and then create the runtime container image from the compiled binaries, it's easier to combine the build and runtime in a single multi-stage docker file, that way you control the environment for both build and deployment. Here is a very simple example:
@@ -122,6 +124,7 @@ Use `kubectl apply` to run the deployment:
 Consider using [Helm](https://helm.sh/) to template your deployments for any but the very simplest cases.
 
 ### Build and Deployment
+
 Your build and deploy pipeline will look something like this:
 
 1. `docker build .` Build your service container image.
@@ -137,6 +140,7 @@ One of the great advantages of Kubernetes is that it enables source controlled i
 My personal preference is to store the Dockerfile, Kubernetes object YAML files, and build pipeline script in the same repo as the service/application source code.
 
 ### Application Lifecycle
+
 It's general good advice to make your application easily disposable, with fast startup and graceful shutdown.
 
 It can also be worth adding liveness and/or readiness probes to your application. These are HTTP endpoints that Kubernetes can query to ascertain the state of your application. If your application needs to restart, it's best to simply fail fast and let Kubernetes restart the container, but if that is impractical for some reason you can return an HTTP failure code (500) from your liveness endpoint and Kubernetes will restart the container for you. Readiness probes are probably the most useful. They signal to Kubernetes that your application is ready to receive requests. This means that traffic will not be routed to the container until Kubernetes sees a 200 response. Very useful if your application has a long startup time.
@@ -197,6 +201,7 @@ Configure them in the deployment YAML file like this:
 ```
 
 ### Memory and CPU Limits
+
 It's important to set resource quotas for your container so that Kubernetes can correctly schedule your pod to a node. This means configuring resource limits and requests in your deployment YAML. Unless you've got a particular problem you want to solve, it's easiest and simplest just to set the limits and requests to the same values. If you don't set limits and requests, Kubernetes will gives your pod a _best effort_ quality of service which give no guarantee that it wont be evicted when node resources are short. Setting limits and requests gives you _guaranteed_ QoS. Be conservative with the values you choose. Your pod will be throttled if it exceeds its CPU limits, and restarted if it exceeds its memory limits.
 
 ```yaml
@@ -214,6 +219,7 @@ It's important to set resource quotas for your container so that Kubernetes can 
 ```
 
 ### Configuration
+
 Configuration here means everything that is different for deploying in different environments (e.g. development, QA, staging, production). A single container image should be deployable to any environment without modification. The easiest way to manage configuration in a Kubernetes deployed app is via environment variables. These also have the advantage of being language and OS-agnostic.
 
 Environment variables can be configured using a Kubernetes [ConfigMap](https://kubernetes.io/docs/concepts/configuration/configmap/). Here is a simple example which defines two values:
@@ -269,6 +275,7 @@ app.MapGet("/", (IConfiguration configuration) =>
 For sensitive values, consider using a Kubernetes [Secret](https://kubernetes.io/docs/concepts/configuration/secret/). These are configured differently in Kubernetes, but as with a ConfigMap they are applied to the pod environment and accessed as environment variables by the application.
 
 ### Logging
+
 The Kubernetes way is have your application/service log to stdout and have a log collector/processor on each node (deployed as a [daemonset](https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/)) collect and forward the logs to an aggregator. A popular combination is [Fluent Bit](https://github.com/fluent/fluent-bit) and [Fluentd](https://github.com/fluent/fluentd) nicely described in this blog post, [Fluentd vs. Fluent Bit: Side by Side Comparison](https://logz.io/blog/fluentd-vs-fluent-bit/)
 
 It's best practice to log event-per-output-line in a structured format such as JSON that the log collector can understand and parse. Configure your service to log event-per-line JSON like this:
@@ -295,7 +302,8 @@ See [Console Log Formatting](https://docs.microsoft.com/en-gb/dotnet/core/extens
 Having said all this, it's worth pointing out that a new, cross vendor, emerging standard for all your tracing, metrics, and logging needs is [OpenTelemetry](https://opentelemetry.io/). Microsoft are [committed to supporting it](https://devblogs.microsoft.com/dotnet/opentelemetry-net-reaches-v1-0/) which means that the good news is changing your service to export OTel logs should be just a question adding a new logging provider. You can check the current status of OTel on their [status page](https://opentelemetry.io/status/). When OTel is ready for production it'll be a case of installing the OTel collector on your Kubernetes cluster and configuring it to communicate with your logging and monitoring tools. See the OTel documentation for more information on this.
 
 ### Metrics
-The CNCF supported standard for metrics collection is [Prometheus](https://prometheus.io/), usually coupled with [Grafana](https://grafana.com/oss/grafana/) to provide dashboards and visualizations. Prometheus is a "pull based" metric collector, which means that your application provides an HTTP endpoint for Prometheus to query. Service discovery is provided by Kubernetes, so it's simply a question of adding some annotations to the application's deployment YAML:
+
+The [CNCF](https://www.cncf.io/) supported standard for metrics collection is [Prometheus](https://prometheus.io/), usually coupled with [Grafana](https://grafana.com/oss/grafana/) to provide dashboards and visualizations. Prometheus is a "pull based" metric collector, which means that your application provides an HTTP endpoint for Prometheus to query. Service discovery is provided by Kubernetes, so it's simply a question of adding some annotations to the application's deployment YAML:
 
 ```yaml
 apiVersion: apps/v1
@@ -360,10 +368,9 @@ You can add your own counters and meters using the library. See the documentatio
 Note that metrics will also be provided by OpenTelemetry (see logging above), so by the time you read this OpenTelemetry might well be the best option for metrics as well.
 
 ### Security
-Again with Kubernetes we want to offload as much of the details of security and authentication to the platform as possible. Generally you should trust communication inside Kubernetes. 
 
-Build your services to serve plain unencrypted HTTP, do HTTPS termination and authentication on your ingress reverse proxy.
+There seem to be two schools of thought on application security in Kubernetes. On one hand are those who suggest that everything in your Kubernetes cluster should be considered trusted and to do things like HTTPS termination and authentication and authorisation on ingress. This allows your application services to be simple HTTP servers that don't need to include components for these tasks.
 
-Also, don't include any authentication in your services, instead use an authentication reverse proxy on ingress that can be shared by all your services. This post is very good on authentication proxies. It doesn't mention Kubernetes, but the principle is the same. [Authentication for multiple apps behind a reverse proxy](http://morganridel.fr/authentication-for-multiple-apps-behind-a-reverse-proxy) Another good read is [Authenticating API Clients with JWT and NGINX Plus](https://www.nginx.com/blog/authenticating-api-clients-jwt-nginx-plus/), which covers how to do this in detail with the commercial edition of Nginx.
+On the other hand, many people suggest adopting a zero trust approach within the Kubernetes cluster. There are obviously security verses complexity trade-offs on both sides of this debate. Which side you fall on will depend very much on the nature of your application and business.
 
-If your internal services need to know about internal services or roles etc, the proxy can translate JWT claims into HTTP headers.
+With the former approach, you build your services to serve plain unencrypted HTTP, do HTTPS termination and authentication on your ingress reverse proxy. For authentication use an authentication reverse proxy on ingress that can be shared by all your services. This post is very good on authentication proxies. It doesn't mention Kubernetes, but the principle is the same. [Authentication for multiple apps behind a reverse proxy](http://morganridel.fr/authentication-for-multiple-apps-behind-a-reverse-proxy) Another good read is [Authenticating API Clients with JWT and NGINX Plus](https://www.nginx.com/blog/authenticating-api-clients-jwt-nginx-plus/), which covers how to do this in detail with the commercial edition of Nginx. If your internal services need to know about internal services or roles etc, the proxy can translate JWT claims into HTTP headers.
