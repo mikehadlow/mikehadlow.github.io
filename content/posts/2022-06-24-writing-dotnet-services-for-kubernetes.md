@@ -369,7 +369,11 @@ Note that metrics will also be provided by OpenTelemetry (see logging above), so
 
 ### Security
 
-There seem to be two schools of thought on application security in Kubernetes. On one hand are those who suggest that everything in your Kubernetes cluster should be considered trusted and to do things like HTTPS termination and authentication and authorisation on ingress. This allows your application services to be simple HTTP servers that don't need to include components for these tasks.
+The debate on Security in Kubernetes is often confused between securing the Kubernetes cluster itself - authenticating and authorising access to the Kubernetes API for developers and administrators working on the cluster, and "userland" security for the application hosted on the cluster - authenticating and authorising users of the application, such a customer wanting to buy something on your eCommerce site. Because of this confusion it's quite frustrating trying to Google for solutions and approaches to application security. Having said all that, here are my thoughts on _application security_.
+
+If you are building any modern HTTP serving application a prerequisite is that you only serve HTTPS over the internet. It's also true that the vast majority of business applications also require some kind of authentication and authorisation. Regardless of whether you are using Kubernetes or not, any distributed application should use Single Sign On (SSO) with a separate Identity Provider (IdP). The prevalent protocol for this is OAuth. For Role Based Access Control (RBAC) individual services need to be able to see claims (user roles and other attributes) passed by the OAuth token, but they don't necessarily need to do the actual token decryption.
+
+There seem to be two schools of thought on application security in Kubernetes. On one hand are those who suggest that everything in your Kubernetes cluster should be considered trusted and to do things like HTTPS termination and auth on ingress. This allows your application services to be simple HTTP servers that don't need to include components for these tasks. One of the main benefits of an application platform is the ability to offload various infrastructure concerns to the platform.
 
 On the other hand, many people suggest adopting a zero trust approach within the Kubernetes cluster. There are obviously security verses complexity trade-offs on both sides of this debate. Which side you fall on will depend very much on the nature of your application and business.
 
