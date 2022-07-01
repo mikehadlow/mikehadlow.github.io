@@ -382,3 +382,7 @@ On the other hand, many people suggest adopting a zero trust approach within the
 With the former approach, you build your services to serve plain unencrypted HTTP, do HTTPS termination and authentication on your ingress reverse proxy. For authentication use an authentication reverse proxy on ingress that can be shared by all your services. This post is very good on authentication proxies. It doesn't mention Kubernetes, but the principle is the same. [Authentication for multiple apps behind a reverse proxy](http://morganridel.fr/authentication-for-multiple-apps-behind-a-reverse-proxy) Another good read is [Authenticating API Clients with JWT and NGINX Plus](https://www.nginx.com/blog/authenticating-api-clients-jwt-nginx-plus/), which covers how to do this in detail with the commercial edition of Nginx. If your internal services need to know about internal services or roles etc, the proxy can translate JWT claims into HTTP headers.
 
 A third, middle way, might be to create a sidecar that can do HTTPS termination and token decryption. Your application can then still be built simply as a pure HTTP service, but external the pod everything is TLS encrypted. Of course it means that you would have to deploy the sidecar alongside every service with the attendant cost and complexity.
+
+-----------------------------
+
+Comment on this post on [Reddit](https://www.reddit.com/r/programming/comments/vp48u9/writing_net_application_services_for_kubernetes/)
