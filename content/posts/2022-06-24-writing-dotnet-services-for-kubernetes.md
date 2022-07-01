@@ -24,7 +24,7 @@ One of the main advantages you'll find writing application services for Kubernet
 
 ### Building your container images
 
-Kubernetes is primarily a container orchestration framework. Your applications/services need to be built and deployed as Docker containers. Microsoft have published a very good guide to building and running containerized .NET applications, [NET Microservices Architecture for Containerized .NET Applications](https://dotnet.microsoft.com/en-us/download/e-book/microservices-architecture/pdf) that I'd recommend reading, although it doesn't cover Kubernetes the advice on creating container images and microservice architecture is very good.
+Kubernetes is primarily a container orchestration framework. Your applications/services need to be built and deployed as (usually Docker) containers. Microsoft have published a very good guide to building and running containerized .NET applications, [NET Microservices Architecture for Containerized .NET Applications](https://dotnet.microsoft.com/en-us/download/e-book/microservices-architecture/pdf) that I'd recommend reading, although it doesn't cover Kubernetes the advice on creating container images and microservice architecture is very good.
 
 Although it's possible to compile your application in a traditional build server and then create the runtime container image from the compiled binaries, it's easier to combine the build and runtime in a single multi-stage docker file, that way you control the environment for both build and deployment. Here is a very simple example:
 
@@ -61,6 +61,8 @@ ENTRYPOINT ["./GreetingsService"]
 ```
 
 As you can see there are multiple `FROM` clauses. Each one discards the previous image so the final `final` image is small.
+
+Note, it's quite common to see just the .csproj file copied first for the restore phase, then the rest of the `src` contents copied for the build. This will give you smaller, more efficient, layer cacheing. Although if you are using an ephemeral build server such as GitHub Actions, there's probably little to be gained. Personally I like to keep things simple.
 
 Build the image with docker build:
 
@@ -121,7 +123,7 @@ Use `kubectl apply` to run the deployment:
 > kubectl apply -f greetings-service-deployment.yaml
 ```
 
-Consider using [Helm](https://helm.sh/) to template your deployments for any but the very simplest cases.
+Consider using [Helm](https://helm.sh/) to template your deployments for any but the very simplest cases. I've also had [Kustomize](https://kustomize.io/) recommended to me, which looks a little simpler than Helm, but I've not used it myself.
 
 ### Build and Deployment
 
@@ -141,7 +143,7 @@ My personal preference is to store the Dockerfile, Kubernetes object YAML files,
 
 ### Application Lifecycle
 
-It's general good advice to make your application easily disposable, with fast startup and graceful shutdown.
+It's general good advice to make your application easily disposable, with fast startup and graceful shutdown. If your application does this and fails fast when it encounters a problem, then you're good to go. Only use the various hooks Kubernetes provides that I describe below if you can't meet these conditions.
 
 It can also be worth adding liveness and/or readiness probes to your application. These are HTTP endpoints that Kubernetes can query to ascertain the state of your application. If your application needs to restart, it's best to simply fail fast and let Kubernetes restart the container, but if that is impractical for some reason you can return an HTTP failure code (500) from your liveness endpoint and Kubernetes will restart the container for you. Readiness probes are probably the most useful. They signal to Kubernetes that your application is ready to receive requests. This means that traffic will not be routed to the container until Kubernetes sees a 200 response. Very useful if your application has a long startup time.
 
@@ -272,7 +274,7 @@ app.MapGet("/", (IConfiguration configuration) =>
 });
 ```
 
-For sensitive values, consider using a Kubernetes [Secret](https://kubernetes.io/docs/concepts/configuration/secret/). These are configured differently in Kubernetes, but as with a ConfigMap they are applied to the pod environment and accessed as environment variables by the application.
+For sensitive values, consider using a Kubernetes [Secret](https://kubernetes.io/docs/concepts/configuration/secret/). These are configured differently in Kubernetes, but as with a ConfigMap they are applied to the pod environment and accessed as environment variables by the application. Note that the default Kubernetes configuration is not very secure and you should configure encryption at rest in etcd and enable TLS/SSL between etcd and your pods. Also beware of who has access to etcd. It's also recommended to take advantage of your cloud providers' secrets provider if it has one.
 
 ### Logging
 
@@ -378,3 +380,5 @@ There seem to be two schools of thought on application security in Kubernetes. O
 On the other hand, many people suggest adopting a zero trust approach within the Kubernetes cluster. There are obviously security verses complexity trade-offs on both sides of this debate. Which side you fall on will depend very much on the nature of your application and business.
 
 With the former approach, you build your services to serve plain unencrypted HTTP, do HTTPS termination and authentication on your ingress reverse proxy. For authentication use an authentication reverse proxy on ingress that can be shared by all your services. This post is very good on authentication proxies. It doesn't mention Kubernetes, but the principle is the same. [Authentication for multiple apps behind a reverse proxy](http://morganridel.fr/authentication-for-multiple-apps-behind-a-reverse-proxy) Another good read is [Authenticating API Clients with JWT and NGINX Plus](https://www.nginx.com/blog/authenticating-api-clients-jwt-nginx-plus/), which covers how to do this in detail with the commercial edition of Nginx. If your internal services need to know about internal services or roles etc, the proxy can translate JWT claims into HTTP headers.
+
+A third, middle way, might be to create a sidecar that can do HTTPS termination and token decryption. Your application can then still be built simply as a pure HTTP service, but external the pod everything is TLS encrypted. Of course it means that you would have to deploy the sidecar alongside every service with the attendant cost and complexity.
