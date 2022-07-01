@@ -61,3 +61,27 @@ Very useful to have the CodePen examples to play with. Of course this is the gre
 ### 8. Data Joins
 
 This is really the core of D3, taking an array of data and binding it to a matching array of HTML or SVG elements and then modifying attributes of the elements with values from the data. Very good explanation of how data binding works and some great examples of modifying elements based on the data. Also covers binding arrays of objects and using multi-variable values to modify different aspects of the bound elements.
+
+### 9. Practical: Draw The Data
+
+Joins up several of the pieces introduced so far to load the energy data and draw a circle for each country. Nice short exercise with a visible result.
+
+### 10. Scale Functions
+
+Introduces D3's scale functions. Very useful for sizing visual elements from data. Interesting little side note about scaling areas with scaleSqrt. D3 makes this really easy.
+
+### 11. Practical: Size The Circles
+
+A practical exercise of scaling the circles produced by the energy data by amount of renewable energy. Effective demonstration of scaleSqrt.
+
+### 12. Architecture For Web Based Data Visualisation
+
+Useful tips for code clarity.
+
+Suggests separating the layout function from the rendering function.
+
+Introduces Javascript Modules. Suggest using simple script loading for small projects, introduces ES6 modules, but says better to use WebPack for large projects, especially if backwards compatibility is required for older browsers.
+
+### 13. Practical Add Modules
+
+Works through the practical steps of separating out the previous code into layout.js and update.js modules.
