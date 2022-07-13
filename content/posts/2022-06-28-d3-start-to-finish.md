@@ -1,6 +1,6 @@
 ---
 title: "Book Review: D3 Start To Finish by Peter Cook"
-date: 2022-06-28
+date: 2022-07-13
 draft: true
 author: Mike Hadlow
 ---
