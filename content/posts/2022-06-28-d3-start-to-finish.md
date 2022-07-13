@@ -26,3 +26,5 @@ The core concepts of D3, and indeed the core of this book, are D3 selections and
 D3 also includes a large library of modules to help with building visualisations. Several of the most important get thorough coverage in the book, including the Fetch module for loading data from external sources, the Scale functions for mapping data to UI values, and Transitions for animating changes to a visualisation. In each case the library functions are introduced and then applied to Energy Explorer, giving a practical example of their use.
 
 In conclusion I'd very much recommend this book to anyone who needs to rapidly get up to speed with D3, whether they are an experienced developer or a relative novice. It will give you all the tools and knowledge to create professional grade visualisations. Then it's just up to your imagination how you want to use it.
+
+[Discuss on Reddit](https://www.reddit.com/r/programming/comments/vy7aac/book_review_d3_start_to_finish_by_peter_cook/)
