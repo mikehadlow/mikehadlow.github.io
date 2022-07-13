@@ -1,7 +1,7 @@
 ---
 title: "Book Review: D3 Start To Finish by Peter Cook"
 date: 2022-07-13
-draft: true
+draft: false
 author: Mike Hadlow
 ---
 This is my review of [D3 Start to Finish](https://www.createwithdata.com/d3-start-to-finish-book/) by [Peter Cook](https://www.peterrcook.com/). Peter is a well known author and educator in the world of data visualisation as well as being an in-demand software developer. This is his introductory tutorial to [D3](https://d3js.org/), a Javascript library used primarily for targetting [SVG](https://developer.mozilla.org/en-US/docs/Web/SVG) for browser native data visualisations. D3 is a very powerful tool, as a quick browse of the [website](https://d3js.org/) will demonstrate. This book evolved from Peter's courses on D3 and aims to teach you all you need to know to produce professional D3 based data visualisations.
