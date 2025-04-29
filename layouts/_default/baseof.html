@@ -13,7 +13,7 @@
         <meta property="og:image"              content="{{ "/img/blog-image.png" | absURL }}" />
 
         <title>{{ .Site.Title }}</title>
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.1/css/bulma.min.css">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css">
 
         {{ range .AlternativeOutputFormats -}}
             {{ printf `<link rel="%s" type="%s" href="%s" title="%s" />` .Rel .MediaType.Type .Permalink $.Site.Title | safeHTML }}
@@ -37,10 +37,9 @@
                         {{ range where .Site.RegularPages "Section" "top" }}
                         <a href="{{ .Permalink }}" class="navbar-item">{{ .Title }}</a>
                         {{ end}}
-                        <a href="https://twitter.com/mikehadlow" target="_blank" rel="noopener noreferrer" class="navbar-item">
-                            <svg height="24" viewBox="328 355 335 276" width="24" aria-hidden="true">
-                                <path style="fill:#3BA9EE;" d="M 630, 425 A 195, 195 0 0 1 331, 600 A 142, 142 0 0 0 428, 570 A  70,  70 0 0 1 370, 523 A  70,  70 0 0 0 401, 521 A  70,  70 0 0 1 344, 455 A  70,  70 0 0 0 372, 460 A  70,  70 0 0 1 354, 370 A 195, 195 0 0 0 495, 442 A  67,  67 0 0 1 611, 380 A 117, 117 0 0 0 654, 363 A  65,  65 0 0 1 623, 401 A 117, 117 0 0 0 662, 390 A  65,  65 0 0 1 630, 425 Z">
-                                </path>
+                        <a href="https://bsky.app/profile/mikehadlow.com" target="_blank" rel="noopener noreferrer" class="navbar-item">
+                            <svg height="24" viewBox="0 0 64 64" width="24" aria-hidden="true">
+                                <path fill="#0085ff" d="M13.873 3.805C21.21 9.332 29.103 20.537 32 26.55v15.882c0-.338-.13.044-.41.867-1.512 4.456-7.418 21.847-20.923 7.944-7.111-7.32-3.819-14.64 9.125-16.85-7.405 1.264-15.73-.825-18.014-9.015C1.12 23.022 0 8.51 0 6.55 0-3.268 8.579-.182 13.873 3.805ZM50.127 3.805C42.79 9.332 34.897 20.537 32 26.55v15.882c0-.338.13.044.41.867 1.512 4.456 7.418 21.847 20.923 7.944 7.111-7.32 3.819-14.64-9.125-16.85 7.405 1.264 15.73-.825 18.014-9.015C62.88 23.022 64 8.51 64 6.55c0-9.818-8.578-6.732-13.873-2.745Z"></path>
                             </svg>
                         </a>
                         <a href="https://github.com/mikehadlow" target="_blank" rel="noopener noreferrer" class="navbar-item">

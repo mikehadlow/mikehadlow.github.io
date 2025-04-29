@@ -8,5 +8,5 @@ author: Mike Hadlow
 | Service | Address |
 |---|---|
 | Email | [mike@suteki.co.uk](mailto:mike@suteki.co.uk) |
-| Twitter | [@mikehadlow](https://twitter.com/mikehadlow) |
+| BlueSky | [@mikehadlow.com](https://bsky.app/profile/mikehadlow.com) |
 | GitHub | [@mikehadlow](https://github.com/mikehadlow) |
