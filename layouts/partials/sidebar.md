@@ -1,4 +1,4 @@
-__Hi, I'm Mike Hadlow. Software developer, architect, blogger and open source developer.__
+__Hi, I'm Mike Hadlow. Software Engineer, based in Sussex, UK.__
 
 Find my old blog at [Code Rant](http://mikehadlow.blogspot.com/). This ran from 2005 to 2020 and has hundreds of posts.
 
