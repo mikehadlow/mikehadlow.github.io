@@ -1,6 +1,6 @@
 <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-  <rect width="100" height="100" fill="#0000AA" rx="15" />
+  <rect width="100" height="100" fill="none" rx="15" />
   <g transform="translate(0, 30)" fill="white" font-size="60" font-family="sans-serif">
-    <text x="0" y="40">MH</text>
+    <text x="0" y="40">✅</text>
   </g>
 </svg>
