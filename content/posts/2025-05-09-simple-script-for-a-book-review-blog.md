@@ -4,7 +4,17 @@ date: 2025-05-09
 draft: false
 author: Mike Hadlow
 ---
-Blah
+I read _a lot_. Every year I get through 15 to 20 books, mostly non-fiction, and particularly history. I keep a spreadsheet with a record of the book title and author, and when I started and ended reading it. When I complete a book, I write a short review, usually not more than a paragraph or so. A few years back I also started a music review blog, hosted with GitHub pages, and built using the excellent static site engine [Hugo](https://gohugo.io/). After an initial bout of enthusiasm, it was largely neglected. I am a very lazy man, and even the effort of creating a new markdown file and doing a quick commit proved enough to ensure I didn't bother with it. But the book review spreadsheet worked, I've been pretty good at maintaining it, simply because it's so little effort. So why not sync the spreadsheet with the review blog? A quick chat with Gemini (my LLM of choice) revealed that it should be a straightforward thing to enable.
+
+Here is the result, a Google Apps Script, that runs nightly. Here's how it works:
+
+1. When I'm ready for the spreadsheet review to sync with the blog, I simply add a `slug`. This is a short string, usually a combination of author surname plus a word of the title, so `dickens-expectations` for example.
+1. To provide an image for the post, I take a photo of the book with my Android phone. I then share the photo to a Google Drive folder and give it the same filename as the `slug` (with the `.jpg` extension of course). This only takes a few clicks. One nice touch is that the share option remembers the folder I chose last time - well done Google UX team.
+1. The script (included below) runs every night. It looks for rows in the spreadsheet which have a `slug` value set and then takes the information from the row, including the review, and populates a template for the Hugo [front-matter](https://gohugo.io/content-management/front-matter/) and generates the markdown page for the review.
+1. The script then adds the generated markdown file as new commit using the GitHub API. If the file already exists, it just no-ops and carries on.
+1. The script then looks for an image named `<slug>.jpg` in the designated Google Docs folder. It also add this to the blog repo as a new commit.
+
+So far it's working really well and my long neglected review blog has come back to life. The script is included below for your perusal. As always, code on this blog has an MIT license, you can do what you like with it, but there is of course zero warranty of any kind.
 
 ```javascript
 // A Google Apps Script to sync book reviews stored in a Google Docs spreadsheet
