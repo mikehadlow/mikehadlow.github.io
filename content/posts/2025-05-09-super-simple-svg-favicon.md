@@ -1,5 +1,5 @@
 ---
-title: "A Super Simple Favicon SVG"
+title: "Emojis As Favicons"
 date: 2024-05-09
 draft: false
 author: Mike Hadlow
@@ -26,7 +26,7 @@ You can customize it for your own site by just replacing the tokens below:
 </svg>
 ```
 
-A neat little trick to use emojis for the character(s) 👍🏻
+And of course those characters can be emojis 👍🏻
 
 Don't forget the `<link>` element in your `<header>`:
 
