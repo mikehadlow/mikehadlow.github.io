@@ -1,26 +1,23 @@
 {{ define "content"}}
-                <h1 class="title">{{ .Page.Title }}</h1>
-                <h2 class="subtitle">C# .NET Developer</h2>
-                <ul>
-                    {{ range where .Site.RegularPages "Section" "posts" }}
-                    <li class="card">
-                        <div class="card-content">
-                            <div class="content">
-                                <p>
-                                    <a href="{{ .Permalink }}"><strong>{{ .Title }}</strong></a>
-                                    <br/>
-                                    <em>{{ .Date.Format "Jan 2, 2006" }}</em> 
-                                </p>
-                                <p>
-                                    {{ .Summary }}
-                                </p>
-                                <p>
-                                    <a href="{{ .Permalink }}"><em>Read more...</em></a>
-                                </p>
-                            </div>
-                        </div>
-                    </li>
-                    <br/>
-                    {{ end }}
-                </ul>
+<h1 class="title">{{ .Page.Title }}</h1>
+<ul>
+    {{ range where .Site.RegularPages "Section" "posts" }}
+    <li class="card">
+        <div class="card-content">
+            <div class="content">
+                <p>
+                    <a href="{{ .Permalink }}"><strong>{{ .Title }}</strong></a>
+                    <br />
+                    <em>{{ .Date.Format "Jan 2, 2006" }}</em>
+                </p>
+                <p>{{ .Summary }}</p>
+                <p>
+                    <a href="{{ .Permalink }}"><em>Read more...</em></a>
+                </p>
+            </div>
+        </div>
+    </li>
+    <br />
+    {{ end }}
+</ul>
 {{ end }}
