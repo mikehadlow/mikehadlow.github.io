@@ -11,3 +11,5 @@ hugo server
 You should be able to browse to the blog at http://localhost:1313/.
 
 It also uses the [Bulma](https://bulma.io/) CSS framework.
+
+All code is MIT licensed, all blog text is copyright Mike Hadlow.
