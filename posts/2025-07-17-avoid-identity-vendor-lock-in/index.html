@@ -1,0 +1,199 @@
+<!doctype html><html><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta name=description content="Mike Hadlow C# .NET technical blog."><meta name=author content="Mike Hadlow"><meta property="og:url" content="https://mikehadlow.com/posts/2025-07-17-avoid-identity-vendor-lock-in/"><meta property="og:type" content="article"><meta property="og:title" content="Avoid IaaS Lock-In With a SAML Proxy"><meta property="og:description" content="TL;DR Adopting an Infrastructure As A Service (IaaS) provider can save huge
+time and effort when implementing a B2B SaaS product, but it can also result in
+deep lock-in with the provider. I explain how deploying a SAML Proxy can
+mitigate this, and provide a case study of migrating hundreds of customers from
+one IaaS provider to a competitor instantly and with near zero disruption. I
+also introduce my new open source SAML
+Proxy, a fully functional demo that
+you can try out yourself and modify for your own custom scenarios."><meta property="og:image" content="https://mikehadlow.com/img/blog-image.png"><title>Mike Hadlow</title><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css><link rel=icon href=/favicon.svg type=image/svg+xml></head><body><nav class="navbar is-dark" role=navigation aria-label="main navigation"><div class=container><div class=navbar-brand><a href=/ class=navbar-item><strong>Mike Hadlow</strong>
+</a><a role=button class=navbar-burger aria-label=menu aria-expanded=false data-target=menu><span aria-hidden=true></span>
+<span aria-hidden=true></span>
+<span aria-hidden=true></span></a></div><div id=menu class=navbar-menu><div class=navbar-start><a href=https://mikehadlow.com/top/about/ class=navbar-item>About</a>
+<a href=https://mikehadlow.com/top/contact/ class=navbar-item>Contact</a>
+<a href=https://bsky.app/profile/mikehadlow.com target=_blank rel="noopener noreferrer" class=navbar-item><svg height="24" viewBox="0 0 64 64" width="24" aria-hidden="true"><path fill="#0085ff" d="M13.873 3.805C21.21 9.332 29.103 20.537 32 26.55v15.882c0-.338-.13.044-.41.867-1.512 4.456-7.418 21.847-20.923 7.944-7.111-7.32-3.819-14.64 9.125-16.85-7.405 1.264-15.73-.825-18.014-9.015C1.12 23.022.0 8.51.0 6.55.0-3.268 8.579-.182 13.873 3.805zm36.254.0C42.79 9.332 34.897 20.537 32 26.55v15.882c0-.338.13.044.41.867 1.512 4.456 7.418 21.847 20.923 7.944 7.111-7.32 3.819-14.64-9.125-16.85 7.405 1.264 15.73-.825 18.014-9.015C62.88 23.022 64 8.51 64 6.55c0-9.818-8.578-6.732-13.873-2.745z"/></svg>
+</a><a href=https://github.com/mikehadlow target=_blank rel="noopener noreferrer" class=navbar-item><svg height="24" viewBox="0 0 16 16" width="24" aria-hidden="true"><path style="fill:#fff" fill-rule="evenodd" d="M8 0C3.58.0.0 3.58.0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38.0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95.0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12.0.0.67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15.0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48.0 1.07-.01 1.93-.01 2.2.0.21.15.46.55.38A8.013 8.013.0 0016 8c0-4.42-3.58-8-8-8z"/></svg></a></div></div></div></nav><section class=section><div class=container><div class=columns><div class="column is-two-thirds"><h1 class=title>Avoid IaaS Lock-In With a SAML Proxy</h1><p class=subtitle>By Mike Hadlow, published Jul 17, 2025</p><div><article id=content class=content><p><em>TL;DR Adopting an Infrastructure As A Service (IaaS) provider can save huge
+time and effort when implementing a B2B SaaS product, but it can also result in
+deep lock-in with the provider. I explain how deploying a SAML Proxy can
+mitigate this, and provide a case study of migrating hundreds of customers from
+one IaaS provider to a competitor instantly and with near zero disruption. I
+also introduce my new open source <a href=https://github.com/mikehadlow/samlproxy>SAML
+Proxy</a>, a fully functional demo that
+you can try out yourself and modify for your own custom scenarios.</em></p><ul><li><a href=#how-does-iaas-lock-in-happen>How Does IaaS Lock-in Happen?</a></li><li><a href=#how-a-saml-proxy-can-help>How a SAML Proxy Can Help</a></li><li><a href=#case-study>Case Study</a></li><li><a href=#introducing-saml-proxy>Introducing SAML Proxy</a></li></ul><h3 id=how-does-iaas-lock-in-happen>How Does IaaS Lock-in Happen?</h3><p>Any successful B2B SaaS product has to offer &ldquo;enterprise SSO&rdquo; - which usually
+means SAML authentication - to its customers. Unfortunately knowledge of SAML
+authentication protocols is somewhat specialist, and the risks of a poorly
+implemented SAML Service Provider (SP) compromising your security are high. Add
+to that the cost of a custom implementation and it rapidly becomes obvious that
+using a 3rd party authentication service makes sense. These often include
+identity management and role based access control, and make a compelling time
+saver for a new business.</p><p>Identity as a Service (IaaS) has unsurprisingly emerged as a very popular SaaS
+category with a number of competing providers. A list off the top of my head
+would include Okta (and Auth0), AWS Cognito, WorkOS, and Clerk.</p><p>There is a danger of course with adopting an IaaS, that it inevitably means deep
+coupling (lock-in) with the IaaS vendor, making it technically difficult to switch to a
+different provider. This has multiple dimensions, especially if you adopt them
+for full identity/role management, but for this blog post I want to focus on
+just one aspect, enterprise SSO using the SAML protocol.</p><p>A SAML SSO connection has two parties: the Service Provider (SP), and the
+Identity Provider (IdP). The SP is your application that trusts an IdP to
+authenticate users on its behalf, but if you&rsquo;ve delegated authentication to a
+3rd party IaaS, your SP will be hosted by them. The IdP can be your customer&rsquo;s
+in-house implementation, but more commonly it will be provided on their behalf
+by a 3rd party like Okta, Google, or Microsoft. The lock-in happens because A
+SAML connection between an SP and an IdP is configured at both ends, so if you
+want to change the IdP or SP, both ends of the connection will need to be
+reconfigured, but you, as the SP, have no control over the IdP configuration.</p><pre class=mermaid>
+  block-beta
+columns 6
+
+    %% Headers
+    h1[&#34;Service&lt;br/&gt;Provider&#34;]:2
+    space:2
+    h2[&#34;Identity&lt;br/&gt;Provider&#34;]:2
+
+    style h1 fill:none,stroke:none
+    style h2 fill:none,stroke:none
+
+    %% Service Provider
+    block:a
+    columns 2
+      a1[&#34;SP&#34;]:2
+      a2[&#34;ACS URL&#34;]:2
+    end
+
+    space:2
+
+    %% IdP
+    block:b
+    columns 2
+      b1[&#34;SSO URL&#34;]:2
+      b2{&#34;IdP&#34;]:2
+    end
+
+    style a stroke:black,fill:#AAE
+    style b stroke:black,fill:#AEA
+
+    a1--&#34;AuthnReq&#34;--&gt;b1
+    b2--&#34;Assertion&#34;--&gt;a2
+</pre><p>At a minimum the service provider (or IaaS) will need to be configured with:</p><table><thead><tr><th></th><th></th></tr></thead><tbody><tr><td><strong>IdP SSO URL</strong></td><td>This is the endpoint at the IdP that receives the <code>AuthnRequest</code> (request for authentication). These paths are vendor specific and often include a unique string for each connection</td></tr><tr><td><strong>IdP Entity Id</strong></td><td>This is a unique identifier for the IdP. Most IdPs will specify a unique Entity Id for each SP connection</td></tr><tr><td><strong>IdP X509 Certificate</strong></td><td>This is the IdP&rsquo;s public encryption key that the SP will use to validate the assertion&rsquo;s X509 signature. IdPs will usually provide a unique certificate for each SP connection</td></tr></tbody></table><p>This configuration will typically be exported from the IdP as an XML document
+called &ldquo;Metadata XML&rdquo;. Often it&rsquo;s given as a public URL that most IaaS providers
+will accept in their management console.</p><p>The Identity Provider&rsquo;s minimal configuration for each SP that it provides
+authentication for is:</p><table><thead><tr><th></th><th></th></tr></thead><tbody><tr><td><strong>SP ACS URL</strong></td><td>This is the SP&rsquo;s Assertion Consumer Service, the endpoint that receives the SAML Assertion from the IdP. Most IaaS services will provide a unique URL for each IdP connection</td></tr><tr><td><strong>SP Entity Id</strong></td><td>This is a unique identifier for the SP and will often be unique per connection.</td></tr></tbody></table><p>I&rsquo;ve worked with three separate IaaS services: AWS Cognito, Auth0, and Clerk.
+All provide a management API that allows one to query their service provider
+configuration, so in theory, if one were to migrate from one IaaS to another,
+one could simply extract the configuration from, say, Cognito, and apply it to,
+for example, Clerk. The problem is that your new SP (IaaS) will have a different
+ACS URL and a different Entity Id since these are vendor specific. So even if
+one could make a request for authentication to an IdP, it would at minimum be
+rejected because of an unmatched Entity Id, or, even if that wasn&rsquo;t an issue,
+the SAML Assertion would be sent to the wrong ACS URL.</p><p>This is the core issue with any migration: <em>One has no alternative but to
+contact each customer in turn and request that they reconfigure their IdP to
+point to your new IaaS provider. For a company with hundreds, or even thousands
+of customers, each with their own IdP configuration, this is a huge ask.</em></p><h3 id=how-a-saml-proxy-can-help>How a SAML Proxy Can Help</h3><p>A SAML IdP Proxy is a stand-alone service that sits between an SP and an IdP. It
+can route, modify, log, and enhance SAML interactions, but most importantly for
+our discussion it decouples the SP from the IdP and allows seamless migration
+between different SPs and IdPs without needing to reconfigure the peer.</p><p>The SAML Proxy acts as an IdP to your SP, and an SP to your IdP, and provides a
+mapping between them. See the diagram below:</p><pre class=mermaid>
+  block-beta
+columns 6
+
+    %% Headers
+    h1[&#34;Service&lt;br/&gt;Provider&#34;]
+    space
+    h2[&#34;Proxy&#34;]:2
+    space
+    h3[&#34;Identity&lt;br/&gt;Provider&#34;]
+
+    style h1 fill:none,stroke:none
+    style h2 fill:none,stroke:none
+    style h3 fill:none,stroke:none
+
+    %% Service Provider
+    block:a
+    columns 1
+      a1[&#34;SP&#34;]
+      a2[&#34;ACS&#34;]
+    end
+
+    space:1
+
+    %% Proxy
+    block:b:2
+    columns 2
+      b1[&#34;SSO&#34;]
+      b2[&#34;SP&#34;]
+      b3[&#34;IdP&#34;]
+      b4[&#34;ACS&#34;]
+    end
+
+    space:1
+
+    %% IdP
+    block:c
+    columns 1
+      c1[&#34;SSO&#34;]
+      c2{&#34;IdP&#34;]
+    end
+
+    style a stroke:black,fill:#AAE
+    style b stroke:black,fill:#AEA
+    style c stroke:black,fill:#EAA
+
+    space:6
+    space:2
+    db[(&#34;Connection&lt;br/&gt;Mapping&#34;)]:2
+    space:2
+
+    a1--&#34;AuthnReq&#34;--&gt;b1
+    b2--&#34;AuthnReq&#34;--&gt;c1
+    c2--&#34;Assertion&#34;--&gt;b4
+    b3--&#34;Assertion&#34;--&gt;a2
+
+    b--&gt;db
+</pre><p>Because you have full control over the SAML Proxy&rsquo;s configuration you can freely
+reconnect SPs to IdPs and IdPs to SPs, or even multiplex single SPs to multiple
+IdPs using whatever attributes you want (and vice-versa of course). Ideally you
+would implement a SAML Proxy when adopting an IaaS solution, but failing that it
+is possible to retroactively insert one between your SP/IaaS and your customers
+IdPs, the case study below explains how.</p><h3 id=case-study>Case Study</h3><p>I was part of a team which migrated several hundred customers away from Auth0
+and Cognito using this method. The company was a B2B start-up that had been
+growing for several years as a monolithic single application. They had several
+hundred customers configured with SAML connections via AWS Cognito and Auth0.
+Cognito had been the original choice since the company was wholly based on AWS
+infrastructure, but a missing feature in Cognito had led to Auth0 integration
+being used for around 80 customers.</p><p>Two main factors forced a review of how authentication was implemented:</p><ol><li>The company was moving to a distributed application model with several
+applications that needed seamless authentication between them. Refactoring
+the monolith&rsquo;s authentication logic and UI was seen as impractical when there
+are so many IaaS solutions that provide the same functionality
+out-of-the-box.</li><li>Auth0 was proving to be very expensive.</li></ol><p>After considering a number of competing options it was decided to adopt Clerk as
+the IaaS for all current and future applications. One compelling feature was
+Clerk&rsquo;s provision of React authentication UI components that could simply be
+dropped into new applications as needed.</p><p>It was at this point that the question of how to migrate the company&rsquo;s SAML
+customers to Clerk arose. Somebody suggested using a SAML Proxy, but after some
+investigation we were surprised to find that there were no open-source or
+commercial options available. I volunteered to build one based around the
+excellent <a href=https://samlify.js.org/#/>Samlify</a> library.</p><p>I was able to extract the SP configuration from Cognito and Auth0 using their
+management APIs, and because I was building the Proxy, it was simple to provide
+endpoints that mimicked their ACS endpoints. We had configured both our Cognito
+and Auth0 tenants with custom company sub domains; something like
+<code>auth.acme.com</code>, so all we needed was a DNS reconfiguration to point all our
+customers at once to our proxy rather than Cognito and Auth0. Since we were
+adopting Clerk as a new service it was simple to configure it from scratch to
+point to our SAML Proxy. Each customer had a unique connection in Clerk which
+pointed to a unique connection in the proxy which then mapped to the customer&rsquo;s
+IdP. Simple!</p><p>Of course it wasn&rsquo;t <em>that</em> simple. There was much to learn during the process. One
+of the biggest difficulties was our inability to do much realistic testing
+before the DNS switch. Ultimately it was successful though; we migrated several hundred
+SAML customers to Clerk in two batches, one each for Cognito and Auth0.</p><h3 id=introducing-saml-proxy>Introducing SAML Proxy</h3><p>The SAML proxy I built for the company in the case study was their proprietary
+code, but since then I&rsquo;ve built a generic <a href=https://github.com/mikehadlow/samlproxy>open source SAML
+Proxy</a> with an entirely new codebase.</p><p>Here is it in action:</p><p><img src=/img/saml_proxy_demo.gif alt></p><p>The GitHub repository for the proxy, called, imaginatively &ldquo;SAML Proxy&rdquo; is at
+<a href=https://github.com/mikehadlow/samlproxy>https://github.com/mikehadlow/samlproxy</a>.
+There are full instructions on how to clone it and run it. It also includes a
+demo SP and IdP, which could serve as a starting point, especially if you want
+to add SAML authentication to your existing application, but don&rsquo;t want to pay
+for an IaaS provider. It&rsquo;s provided as a demo, so you&rsquo;ll need to do some work to
+alter it for your own needs, but hopefully it&rsquo;ll save you considerable time.
+It has an MIT license, so you are free to take the code and use it
+however you wish. I&rsquo;d be very curious to hear about any actual implementations,
+so please let me know if you can.</p><p>Happy Proxying!</p></article></div></div><div class="column is-one-third"><div class=content><p><strong>Hi, I&rsquo;m Mike Hadlow. Software Engineer, based in Sussex, UK.</strong></p><p>Find my old blog at <a href=http://mikehadlow.blogspot.com/>Code Rant</a>. This ran from 2005 to 2020 and has hundreds of posts.</p><p><em>All code on this blog is published under an <a href=https://opensource.org/licenses/MIT>MIT licence</a>. You are free to copy it and use it for any purpose without attribution. There is no warranty whatsoever. All non-code text is copyright Mike Hadlow and cannot be reused without permission.</em></p><p><strong>There are no cookies on this site</strong></p><p>The GitHub repository for this site is <a href=https://github.com/mikehadlow/mikehadlow.github.io>here</a>.</p></div><hr></hr><div class=content><a href=https://bsky.app/profile/mikehadlow.com target=_blank rel="noopener noreferrer" class=navbar-item><svg height="32" viewBox="0 0 64 64" width="24" aria-hidden="true"><path fill="#0085ff" d="M13.873 3.805C21.21 9.332 29.103 20.537 32 26.55v15.882c0-.338-.13.044-.41.867-1.512 4.456-7.418 21.847-20.923 7.944-7.111-7.32-3.819-14.64 9.125-16.85-7.405 1.264-15.73-.825-18.014-9.015C1.12 23.022.0 8.51.0 6.55.0-3.268 8.579-.182 13.873 3.805zm36.254.0C42.79 9.332 34.897 20.537 32 26.55v15.882c0-.338.13.044.41.867 1.512 4.456 7.418 21.847 20.923 7.944 7.111-7.32 3.819-14.64-9.125-16.85 7.405 1.264 15.73-.825 18.014-9.015C62.88 23.022 64 8.51 64 6.55c0-9.818-8.578-6.732-13.873-2.745z"/></svg>
+My BlueSky Feed</a><div class=feed-container><bsky-embed limit=8 mode=light username=mikehadlow.com show-replies=false load-more=true></bsky-embed></div></div></div></div></div></section><script type=module>
+            import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.esm.min.mjs';
+            mermaid.initialize({ startOnLoad: true });
+          </script></body><script>document.addEventListener("DOMContentLoaded",()=>{const e=Array.prototype.slice.call(document.querySelectorAll(".navbar-burger"),0);e.length>0&&e.forEach(e=>{e.addEventListener("click",()=>{const t=e.dataset.target,n=document.getElementById(t);e.classList.toggle("is-active"),n.classList.toggle("is-active")})})})</script><script async src=https://cdn.jsdelivr.net/npm/bsky-embed/dist/bsky-embed.es.js type=module></script></html>
