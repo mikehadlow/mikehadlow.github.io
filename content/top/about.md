@@ -10,7 +10,14 @@ Hello! I am Mike Hadlow. I am a software engineer, based in the UK. I've been bu
 
 __I'm always very interested in hearing about new opportunities, so please [contact]({{< ref "contact" >}}) me to talk about my availability.__
 
-I'm an active open source developer. I'm the original author of [EasyNetQ](https://easynetq.com), the most popular .NET client for the RabbitMQ message server, although I'm no longer active on the project. In my spare time I currently develop and maintain [Guitar Dashboard](https://guitardashboard.com), a music theory explorer for guitarists.
+I'm an active open source developer. Check out my [GitHub
+Profile](https://github.com/mikehadlow). Here are some of my contributions:
+
+* [SAML Proxy](https://github.com/mikehadlow/samlproxy), Proxy SSO SAML connections between an SP and IsP.
+* [EasyNetQ](https://easynetq.com), the most popular .NET client for the RabbitMQ message server.
+* [Guitar Dashboard](https://guitardashboard.com), a music theory explorer for guitarists.
+* [AsmSpy](https://github.com/mikehadlow/AsmSpy), A simple command line tool to view .NET assembly references.
+* [SocSnap](https://github.com/mikehadlow/socsnap_pi), Twitter based social picture device for Raspberry Pi.
 
 I have particular experience and interest with the following:
 
