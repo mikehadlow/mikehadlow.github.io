@@ -5,7 +5,7 @@ draft: false
 author: Mike Hadlow
 ---
 
-_TL;DR Adopting an Infrastructure As A Service (IaaS) provider can save huge
+_TL;DR Adopting an Identity As A Service (IaaS) provider can save huge
 time and effort when implementing a B2B SaaS product, but it can also result in
 deep lock-in with the provider. I explain how deploying a SAML Proxy can
 mitigate this, and provide a case study of migrating hundreds of customers from
