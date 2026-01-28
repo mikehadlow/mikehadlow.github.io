@@ -6,4 +6,9 @@
                     {{ .Content }}
                 </article>
             </div>
+            {{ with .Params.at_post_uri }}
+                {{ $.Page.Store.Set "hasBskyComments" true }}
+                <div id="bluesky-comments" class="mt-6"></div>
+                <script>document.getElementById('bluesky-comments').dataset.postUri = {{ . }};</script>
+            {{ end }}
 {{ end }}

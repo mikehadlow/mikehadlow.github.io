@@ -93,6 +93,9 @@
             mermaid.initialize({ startOnLoad: true });
           </script>
         {{ end }}
+        {{ if .Store.Get "hasBskyComments" }}
+            <script src="/js/bluesky-comments.js"></script>
+        {{ end }}
     </body>
     <script>
     // enables the nav bar burger menu on touch devices
