@@ -36,4 +36,4 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git diff --quiet || (git add content/posts/*.md && git commit -m "Update at_post_uri for new BlueSky posts [skip ci]" && git push)
+          git diff --quiet || (git add content/posts/*.md && git commit -m "Update at_post_uri for new BlueSky posts" && git push)
