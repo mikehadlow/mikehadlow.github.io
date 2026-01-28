@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master # Set a branch to deploy
+  workflow_dispatch: # Allow manual/programmatic triggering
 
 jobs:
   deploy:

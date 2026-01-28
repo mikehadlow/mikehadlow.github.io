@@ -33,7 +33,21 @@ jobs:
         run: node .github/scripts/bluesky-post.mjs
 
       - name: Commit and push changes
+        id: commit
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git diff --quiet || (git add content/posts/*.md && git commit -m "Update at_post_uri for new BlueSky posts" && git push)
+          if git diff --quiet; then
+            echo "changes=false" >> $GITHUB_OUTPUT
+          else
+            git add content/posts/*.md
+            git commit -m "Update at_post_uri for new BlueSky posts [skip ci]"
+            git push
+            echo "changes=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Trigger site rebuild
+        if: steps.commit.outputs.changes == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run "github pages" --ref master
