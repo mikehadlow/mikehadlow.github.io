@@ -2,3 +2,4 @@
 public/
 temp/
 .hugo_build.lock
+.github/scripts/node_modules/

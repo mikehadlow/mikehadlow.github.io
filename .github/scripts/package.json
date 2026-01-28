@@ -1,0 +1,10 @@
+{
+  "name": "bluesky-post-script",
+  "type": "module",
+  "private": true,
+  "dependencies": {
+    "@atproto/api": "^0.14.0",
+    "gray-matter": "^4.0.3",
+    "glob": "^11.0.0"
+  }
+}
