@@ -77,6 +77,42 @@ at_post_uri: "at://did:plc:xxx/app.bsky.feed.post/yyy"
 - Nested replies are supported with indentation (up to 2 levels deep)
 - All user content is escaped to prevent XSS
 
+## Automatic BlueSky Posting
+
+New blog posts can be automatically posted to BlueSky when published. To enable for a post, set `at_post_uri` to an empty string:
+
+```yaml
+---
+title: "Post Title"
+date: YYYY-MM-DD
+author: Mike Hadlow
+at_post_uri: ""
+---
+```
+
+**Behavior:**
+- `at_post_uri: ""` (empty string) - Create BlueSky post automatically
+- `at_post_uri` missing - No BlueSky integration
+- `at_post_uri` populated - Already posted, do nothing
+
+**Workflow sequence:**
+1. Push post with `at_post_uri: ""`
+2. `gh-pages.yml` builds and deploys site
+3. `bluesky-post.yml` triggers on completion
+4. Script creates BlueSky post with title and link
+5. Script updates markdown frontmatter with the AT URI
+6. Script commits with `[skip ci]` and explicitly triggers `gh-pages`
+7. Site rebuilds with populated `at_post_uri`, enabling comments section
+
+**Files involved:**
+- `.github/workflows/bluesky-post.yml` - Workflow triggered after gh-pages completes
+- `.github/scripts/bluesky-post.mjs` - Node.js script that posts to BlueSky and updates frontmatter
+- `.github/scripts/package.json` - Dependencies (@atproto/api, gray-matter, glob)
+
+**Required secrets** (Settings > Secrets and variables > Actions):
+- `BLUESKY_IDENTIFIER` - BlueSky handle (e.g., `mikehadlow.bsky.social`)
+- `BLUESKY_APP_PASSWORD` - App password from BlueSky Settings > App Passwords
+
 ## Instructions for making any changes
 
 Always use Bulma CSS styles for formatting/styling. The Bulma documentation is [here](https://bulma.io/documentation/)
