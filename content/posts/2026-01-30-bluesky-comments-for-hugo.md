@@ -1,9 +1,9 @@
 ---
-title: "Vibe-Coding BlueSky Comments"
-date: 2026-01-30
+title: Vibe-Coding BlueSky Comments
+date: 2026-01-30T00:00:00.000Z
 draft: false
 author: Mike Hadlow
-at_post_uri: ""
+at_post_uri: 'at://did:plc:ept4l4zcjaajxvi5gtb6wnhr/app.bsky.feed.post/3mdnbyqfqwr2h'
 ---
 
 I've vibe-coded a new commenting system for this blog using BlueSky as the backend. At the bottom of the page
