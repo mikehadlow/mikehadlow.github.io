@@ -3,6 +3,7 @@ title: "Book Review: Vibe Coding by Gene Kim and Steve Yegge"
 date: 2026-02-23
 draft: false
 author: Mike Hadlow
+at_post_uri: ""
 ---
 For myself and many others, everything changed around November last year. I'd just started to use Codex and Claude Code when Anthropic's Opus 4.5 was released. It was immediately apparent that this was a step change, both in the capabilities of the models themselves and the tooling that enabled a deep interaction with the CLI. I'd experimented with IDE plugin chatbots and code completion previously, but found it little better than simply asking questions in the web UI. The code completion was too annoying, too often wrong, and interfered with the language-server completions, so I turned it off. The genius of Claude Code was that it meets engineers where they are happiest and most productive, in the CLI. It also seems to play off the strengths of LLMs, in that they are fundamentally text-engines, and what could be more text based than a CLI?
 
