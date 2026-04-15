@@ -1,9 +1,9 @@
 ---
-title: 'Running individual Bun tests with Zed tasks'
-date: 2026-04-15
+title: Running individual Bun tests with Zed tasks
+date: 2026-04-15T00:00:00.000Z
 draft: false
 author: Mike Hadlow
-at_post_uri: ''
+at_post_uri: 'at://did:plc:ept4l4zcjaajxvi5gtb6wnhr/app.bsky.feed.post/3mjjp34q7la2b'
 ---
 I'm a big fan of the [Zed](https://zed.dev) editor. It's been my daily driver
 (when I've had a choice) for around a year now. It runs like butter on an
